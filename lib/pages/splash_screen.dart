@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import 'package:cpsumotorpooldriverapp/pages/dashboard.dart';
 import 'package:cpsumotorpooldriverapp/pages/loginpage.dart';
 import 'package:cpsumotorpooldriverapp/services/auth_service.dart';
@@ -12,9 +13,9 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  static const Color green = Color(0xFF0F8C59);
-  static const Color softGreen = Color(0xFFBFE8D1);
-  static const Color textColor = Color(0xFF1F2A2A);
+  static const Color green = AppColors.primary;
+  static const Color softGreen = AppColors.mint;
+  static const Color textColor = AppColors.navy;
   static const Color mutedColor = Color(0xFF7C7C7C);
 
   late final AnimationController _animationController;
@@ -80,9 +81,10 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Center(
+      backgroundColor: AppColors.background,
+      body: ShellAtmosphere(
+        child: SafeArea(
+          child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -108,6 +110,7 @@ class _SplashScreenState extends State<SplashScreen>
               const SizedBox(height: 20),
               _buildBouncingDots(),
             ],
+          ),
           ),
         ),
       ),

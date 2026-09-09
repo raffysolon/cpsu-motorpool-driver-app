@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 import '../services/auth_service.dart';
 
@@ -10,11 +11,11 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  static const green = Color(0xFF0F8C59);
-  static const ink = Color(0xFF19332A);
-  static const muted = Color(0xFF71827B);
-  static const line = Color(0xFFDCE9E2);
-  static const background = Color(0xFFF7FAF8);
+  static const green = AppColors.primary;
+  static const ink = AppColors.navy;
+  static const muted = AppColors.mutedDark;
+  static const line = AppColors.border;
+  static const background = AppColors.background;
 
   final currentPasswordController = TextEditingController();
   final newPasswordController = TextEditingController();
@@ -101,8 +102,9 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
-        backgroundColor: green,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.glassFill,
+        foregroundColor: AppColors.navy,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         title: const Text(
           'Settings',
@@ -110,9 +112,10 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
+      body: ShellAtmosphere(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             section('Driver Profile', [
@@ -167,20 +170,17 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ]),
           ],
+          ),
         ),
       ),
     );
   }
 
   Widget section(String title, List<Widget> children) {
-    return Container(
+    return GlassCard(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: line),
-      ),
+      borderRadius: 16,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

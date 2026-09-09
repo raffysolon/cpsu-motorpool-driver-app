@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 import '../services/auth_service.dart';
 import '../services/notification_service.dart';
@@ -20,22 +21,22 @@ class DriverDashboard extends StatefulWidget {
 class _DriverDashboardState extends State<DriverDashboard> {
   // ===== COLOR THEME - START =====
   /// Main green color for app branding
-  static const Color green = Color(0xFF0F8C59);
+  static const Color green = AppColors.primary;
 
   /// Dark green color for emphasis and buttons
-  static const Color darkGreen = Color(0xFF0A6E45);
+  static const Color darkGreen = AppColors.primaryDark;
 
   /// Soft green for backgrounds and accents
-  static const Color softGreen = Color(0xFFBFE8D1);
+  static const Color softGreen = AppColors.mint;
 
   /// Main text color
-  static const Color textColor = Color(0xFF1F2A2A);
+  static const Color textColor = AppColors.navy;
 
   /// Border color for elements
-  static const Color borderColor = Color(0xFFE0E0E0);
+  static const Color borderColor = AppColors.border;
 
   /// Light background color
-  static const Color lightBg = Color(0xFFF5F6F5);
+  static const Color lightBg = AppColors.background;
   // ===== COLOR THEME - END =====
 
   // ===== DASHBOARD STATE - START =====
@@ -209,8 +210,9 @@ class _DriverDashboardState extends State<DriverDashboard> {
       // ===== APPBAR - START =====
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: green,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.glassFill,
+        foregroundColor: AppColors.navy,
+        surfaceTintColor: Colors.transparent,
         title: const Text(
           'CPSU MOTORPOOL',
           style: TextStyle(
@@ -436,8 +438,9 @@ class _DriverDashboardState extends State<DriverDashboard> {
       // ===== DRAWER MENU - END =====
 
       // ===== MAIN BODY - START =====
-      body: SafeArea(
-        child: SingleChildScrollView(
+      body: ShellAtmosphere(
+        child: SafeArea(
+          child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -523,23 +526,11 @@ class _DriverDashboardState extends State<DriverDashboard> {
               const SizedBox(height: 30),
 
               // ===== ACTIVE TRIPS SECTION - START =====
-              Container(
-                width: double.infinity,
+              ConstrainedBox(
                 constraints: const BoxConstraints(minHeight: 240),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: softGreen, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Padding(
+                child: GlassCard(
                   padding: const EdgeInsets.all(20),
+                  borderRadius: 20,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -772,6 +763,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
           ),
         ),
       ),
+      ),
       // ===== MAIN BODY - END =====
     );
   }
@@ -789,12 +781,12 @@ class _DriverDashboardState extends State<DriverDashboard> {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        elevation: 3,
+        backgroundColor: AppColors.glassFill,
+        elevation: 0,
         padding: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: softGreen, width: 2),
+          side: const BorderSide(color: AppColors.glassBorder),
         ),
       ),
       child: SizedBox(

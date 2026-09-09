@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import 'package:open_filex/open_filex.dart';
 
 import '../services/notification_service.dart';
@@ -32,11 +33,11 @@ class ScheduledTripsPage extends StatefulWidget {
 }
 
 class _ScheduledTripsPageState extends State<ScheduledTripsPage> {
-  static const Color green = Color(0xFF0F8C59);
-  static const Color softGreen = Color(0xFFBFE8D1);
-  static const Color textColor = Color(0xFF1F2A2A);
-  static const Color borderColor = Color(0xFFE0E0E0);
-  static const Color lightBg = Color(0xFFF5F6F5);
+  static const Color green = AppColors.primary;
+  static const Color softGreen = AppColors.mint;
+  static const Color textColor = AppColors.navy;
+  static const Color borderColor = AppColors.border;
+  static const Color lightBg = AppColors.background;
 
   List<Trip> _trips = [];
   bool _isLoading = true;
@@ -171,8 +172,9 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage> {
       backgroundColor: lightBg,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: green,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.glassFill,
+        foregroundColor: AppColors.navy,
+        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -187,10 +189,11 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage> {
         ),
         centerTitle: true,
       ),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: _isLoading
+      body: ShellAtmosphere(
+        child: Stack(
+          children: [
+            SafeArea(
+              child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _sortedTrips.isEmpty
                 ? _buildEmptyState()
@@ -204,9 +207,10 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage> {
                       return _buildTripCard(_sortedTrips[index]);
                     },
                   ),
-          ),
-          if (_isOpeningTicket) _buildTicketLoadingOverlay(),
-        ],
+            ),
+            if (_isOpeningTicket) _buildTicketLoadingOverlay(),
+          ],
+        ),
       ),
     );
   }
@@ -221,11 +225,9 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage> {
     final canStart =
         sameDay &&
         !now.isBefore(scheduledDate.subtract(const Duration(minutes: 10)));
-    return Card(
-      margin: const EdgeInsets.only(bottom: 14),
-      elevation: 1,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return GlassCard(
+      padding: EdgeInsets.zero,
+      borderRadius: 12,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
         child: Column(

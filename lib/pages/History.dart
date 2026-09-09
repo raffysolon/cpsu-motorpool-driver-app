@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import 'package:open_filex/open_filex.dart';
 
 import '../services/trip_service.dart';
@@ -33,11 +34,11 @@ class HistoryPage extends StatefulWidget {
 }
 
 class _HistoryPageState extends State<HistoryPage> {
-  static const Color green = Color(0xFF0F8C59);
-  static const Color softGreen = Color(0xFFBFE8D1);
-  static const Color textColor = Color(0xFF1F2A2A);
-  static const Color borderColor = Color(0xFFE0E0E0);
-  static const Color lightBg = Color(0xFFF5F6F5);
+  static const Color green = AppColors.primary;
+  static const Color softGreen = AppColors.mint;
+  static const Color textColor = AppColors.navy;
+  static const Color borderColor = AppColors.border;
+  static const Color lightBg = AppColors.background;
 
   static const List<String> _filters = [
     'All time',
@@ -122,8 +123,9 @@ class _HistoryPageState extends State<HistoryPage> {
       backgroundColor: lightBg,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: green,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.glassFill,
+        foregroundColor: AppColors.navy,
+        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -138,8 +140,9 @@ class _HistoryPageState extends State<HistoryPage> {
         ),
         centerTitle: true,
       ),
-      body: SafeArea(
-        child: Column(
+      body: ShellAtmosphere(
+        child: SafeArea(
+          child: Column(
           children: [
             _buildFilterRow(),
             Expanded(
@@ -150,43 +153,48 @@ class _HistoryPageState extends State<HistoryPage> {
                   : _buildTripList(),
             ),
           ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildFilterRow() {
-    return SizedBox(
-      height: 68,
-      child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-        scrollDirection: Axis.horizontal,
-        itemCount: _filters.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final filter = _filters[index];
-          final selected = filter == _selectedFilter;
-          return FilterChip(
-            label: Text(filter),
-            selected: selected,
-            showCheckmark: false,
-            labelStyle: TextStyle(
-              color: selected ? Colors.white : const Color(0xFF707070),
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-            backgroundColor: Colors.white,
-            selectedColor: green,
-            side: BorderSide(color: selected ? green : borderColor),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            onSelected: (value) {
-              setState(() => _selectedFilter = filter);
-              // TODO: Apply the selected date range when history filtering is connected.
-            },
-          );
-        },
+    return GlassCard(
+      padding: EdgeInsets.zero,
+      borderRadius: 16,
+      child: SizedBox(
+        height: 68,
+        child: ListView.separated(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+          scrollDirection: Axis.horizontal,
+          itemCount: _filters.length,
+          separatorBuilder: (context, index) => const SizedBox(width: 8),
+          itemBuilder: (context, index) {
+            final filter = _filters[index];
+            final selected = filter == _selectedFilter;
+            return FilterChip(
+              label: Text(filter),
+              selected: selected,
+              showCheckmark: false,
+              labelStyle: TextStyle(
+                color: selected ? Colors.white : AppColors.mutedDark,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+              backgroundColor: AppColors.glassFill,
+              selectedColor: green,
+              side: BorderSide(color: selected ? green : borderColor),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              onSelected: (value) {
+                setState(() => _selectedFilter = filter);
+                // TODO: Apply the selected date range when history filtering is connected.
+              },
+            );
+          },
+        ),
       ),
     );
   }
@@ -200,11 +208,9 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Widget _buildTripCard(Trip trip) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 14),
-      elevation: 1,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return GlassCard(
+      padding: EdgeInsets.zero,
+      borderRadius: 12,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
         child: Column(

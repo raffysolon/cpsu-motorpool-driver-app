@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 import '../services/notification_service.dart';
 
@@ -49,10 +50,12 @@ class _NotificationsState extends State<Notifications> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notifications'),
-        backgroundColor: const Color(0xFF0F8C59),
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.glassFill,
+        foregroundColor: AppColors.navy,
+        surfaceTintColor: Colors.transparent,
       ),
-      body: _isLoading
+      body: ShellAtmosphere(
+        child: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _loadNotifications,
@@ -70,13 +73,15 @@ class _NotificationsState extends State<Notifications> {
                       itemBuilder: (context, index) {
                         final notification = _notifications[index];
                         final isRead = notification['is_read'] == true;
-                        return Card(
+                        return GlassCard(
+                          padding: EdgeInsets.zero,
+                          borderRadius: 14,
                           child: ListTile(
                             leading: Icon(
                               isRead
                                   ? Icons.notifications_none
                                   : Icons.notifications_active,
-                              color: isRead ? Colors.grey : const Color(0xFF0F8C59),
+                              color: isRead ? AppColors.muted : AppColors.primary,
                             ),
                             title: Text(
                               (notification['message'] ?? 'Notification').toString(),
@@ -93,6 +98,7 @@ class _NotificationsState extends State<Notifications> {
                       },
                     ),
             ),
+          ),
     );
   }
 }

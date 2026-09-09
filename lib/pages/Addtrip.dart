@@ -1,5 +1,6 @@
 // ===== IMPORTS - START =====
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 import '../services/trip_service.dart';
 
@@ -20,12 +21,10 @@ class AddTrip extends StatefulWidget {
 /// Manages multi-step form state and trip creation process
 class _AddTripState extends State<AddTrip> {
   // ===== COLOR THEME - START =====
-  static const Color green = Color(0xFF0F8C59);
-  static const Color darkGreen = Color(0xFF0A6E45);
-  static const Color softGreen = Color(0xFFBFE8D1);
-  static const Color textColor = Color(0xFF1F2A2A);
-  static const Color borderColor = Color(0xFFE0E0E0);
-  static const Color lightBg = Color(0xFFF5F6F5);
+  static const Color green = AppColors.primary;
+  static const Color textColor = AppColors.navy;
+  static const Color borderColor = AppColors.border;
+  static const Color lightBg = AppColors.background;
   // ===== COLOR THEME - END =====
 
   // ===== FORM STEP TRACKING - START =====
@@ -840,8 +839,9 @@ class _AddTripState extends State<AddTrip> {
       backgroundColor: lightBg,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: green,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.glassFill,
+        foregroundColor: AppColors.navy,
+        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: _goToPreviousStep,
@@ -856,22 +856,19 @@ class _AddTripState extends State<AddTrip> {
         ),
         centerTitle: true,
       ),
-      body: SafeArea(
-        child: Padding(
+      body: ShellAtmosphere(
+        child: SafeArea(
+          child: Padding(
           padding: const EdgeInsets.fromLTRB(18, 10, 18, 18),
           child: Column(
             children: [
               // ===== STEP INDICATOR - START =====
-              Container(
+              GlassCard(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 6,
                   vertical: 12,
                 ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: borderColor, width: 1),
-                ),
+                borderRadius: 16,
                 child: Row(
                   children: [
                     Expanded(child: _stepIndicator(0, 'Trip Details')),
@@ -914,6 +911,7 @@ class _AddTripState extends State<AddTrip> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

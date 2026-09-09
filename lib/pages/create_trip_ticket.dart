@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 import '../services/trip_service.dart';
 
@@ -10,12 +11,12 @@ class CreateTripTicket extends StatefulWidget {
 }
 
 class _CreateTripTicketState extends State<CreateTripTicket> {
-  static const green = Color(0xFF0B8F5A);
-  static const darkGreen = Color(0xFF087448);
-  static const ink = Color(0xFF19332A);
-  static const muted = Color(0xFF71827B);
-  static const line = Color(0xFFDCE9E2);
-  static const background = Color(0xFFF7FAF8);
+  static const green = AppColors.primary;
+  static const darkGreen = AppColors.primaryDark;
+  static const ink = AppColors.navy;
+  static const muted = AppColors.mutedDark;
+  static const line = AppColors.border;
+  static const background = AppColors.background;
 
   final formKey = GlobalKey<FormState>();
   final originController = TextEditingController();
@@ -82,8 +83,9 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
-        backgroundColor: green,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.glassFill,
+        foregroundColor: AppColors.navy,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         title: const Text(
           'Create Trip Ticket',
@@ -91,8 +93,9 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
         ),
         centerTitle: true,
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) => SingleChildScrollView(
+      body: ShellAtmosphere(
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(18, 22, 18, 40),
           child: Center(
             child: ConstrainedBox(
@@ -108,19 +111,16 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
               ),
             ),
           ),
+          ),
         ),
       ),
     );
   }
 
   Widget buildProgress() {
-    return Container(
+    return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: line),
-      ),
+      borderRadius: 16,
       child: Row(
         children: [
           buildStep(0, 'Trip Details', Icons.edit_note_rounded),
@@ -180,21 +180,10 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
   );
 
   Widget panel(String title, String subtitle, Widget child) {
-    return Container(
+    return GlassCard(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: line),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0D19332A),
-            blurRadius: 14,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
+      borderRadius: 16,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
