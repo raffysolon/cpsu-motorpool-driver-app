@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cpsumotorpooldriverapp/pages/dashboard.dart';
 import 'package:cpsumotorpooldriverapp/pages/loginpage.dart';
+import 'package:cpsumotorpooldriverapp/services/auth_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -66,8 +67,8 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<bool> _checkAuthStatus() async {
-    // TODO: Check the persisted authentication session.
-    return false;
+    final token = await AuthService.getToken();
+    return token != null && token.isNotEmpty;
   }
 
   @override

@@ -1,4 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:open_filex/open_filex.dart';
+
+import '../services/trip_service.dart';
 
 class Trip {
   const Trip({
@@ -8,6 +13,7 @@ class Trip {
     required this.distance,
     required this.duration,
     required this.status,
+    required this.movements,
   });
 
   final String id;
@@ -16,6 +22,7 @@ class Trip {
   final String distance;
   final String duration;
   final String status;
+  final List<Map<String, dynamic>> movements;
 }
 
 class HistoryPage extends StatefulWidget {
@@ -38,41 +45,75 @@ class _HistoryPageState extends State<HistoryPage> {
     'Last 3 months',
   ];
 
-  static const List<Trip> _trips = [
-    Trip(
-      id: 'TRIP-101',
-      route: 'San Carlos to Bacolod',
-      date: 'Aug 20, 2026',
-      distance: '84 km',
-      duration: '2h 15m',
-      status: 'Completed',
-    ),
-    Trip(
-      id: 'TRIP-102',
-      route: 'Bacolod to Kabankalan',
-      date: 'Aug 12, 2026',
-      distance: '96 km',
-      duration: '2h 40m',
-      status: 'Completed',
-    ),
-    Trip(
-      id: 'TRIP-103',
-      route: 'San Carlos to Himamaylan',
-      date: 'Jul 28, 2026',
-      distance: '112 km',
-      duration: '3h 05m',
-      status: 'Completed',
-    ),
-  ];
-
   String _selectedFilter = 'All time';
+  bool _isLoading = true;
+  final Set<String> _downloadingTripIds = {};
+  List<Trip> _trips = [];
 
-  void _viewTripTicket(String tripId) {
-    // TODO: Open a PDF preview for tripId.
+  @override
+  void initState() {
+    super.initState();
+    _loadTrips();
   }
 
-  void _printTripTicket(String tripId) {
-    // TODO: Trigger the print or download of the trip ticket PDF for tripId.
+  Future<void> _loadTrips() async {
+    try {
+      final rawTrips = await TripService.getMyTrips(status: 'completed');
+      if (!mounted) return;
+      setState(() {
+        _trips = rawTrips.map(_tripFromApi).toList();
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _trips = [];
+        _isLoading = false;
+      });
+    }
+  }
+
+  Trip _tripFromApi(Map<String, dynamic> data) {
+    final origin = (data['origin'] ?? '').toString();
+    final destination = (data['destination'] ?? '').toString();
+    final departure = DateTime.tryParse(
+      data['scheduled_departure']?.toString() ?? '',
+    );
+    final distance = data['total_distance']?.toString() ?? '0';
+    return Trip(
+      id: (data['id'] ?? '').toString(),
+      route: '$origin to $destination',
+      date: departure == null ? '—' : _formatDate(departure.toLocal()),
+      distance: '$distance km',
+      duration: '—',
+      status: 'Completed',
+      movements:
+          (data['movements'] is List ? data['movements'] as List : const [])
+              .whereType<Map>()
+              .map((movement) => Map<String, dynamic>.from(movement))
+              .toList(),
+    );
+  }
+
+  String _formatDate(DateTime date) =>
+      '${_month(date.month)} ${date.day}, ${date.year}';
+
+  String _month(int month) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return months[month - 1];
   }
 
   @override
@@ -87,9 +128,9 @@ class _HistoryPageState extends State<HistoryPage> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Trip History',
-          style: TextStyle(
+        title: Text(
+          'Trip History (${_trips.length})',
+          style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.5,
@@ -102,7 +143,11 @@ class _HistoryPageState extends State<HistoryPage> {
           children: [
             _buildFilterRow(),
             Expanded(
-              child: _trips.isEmpty ? _buildEmptyState() : _buildTripList(),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _trips.isEmpty
+                  ? _buildEmptyState()
+                  : _buildTripList(),
             ),
           ],
         ),
@@ -199,35 +244,116 @@ class _HistoryPageState extends State<HistoryPage> {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _viewTripTicket(trip.id),
+                    onPressed: () => _showTripDetails(trip),
                     icon: const Icon(Icons.visibility_outlined, size: 18),
-                    label: const Text('View'),
+                    label: const Text('View Details'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: green,
+                      foregroundColor: Colors.black,
                       side: const BorderSide(color: green),
-                      padding: const EdgeInsets.symmetric(vertical: 11),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => _printTripTicket(trip.id),
-                    icon: const Icon(Icons.print_outlined, size: 18),
-                    label: const Text('Print'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: green,
-                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 11),
                     ),
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _downloadingTripIds.contains(trip.id)
+                    ? null
+                    : () => _downloadPdf(trip.id),
+                icon: _downloadingTripIds.contains(trip.id)
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.download_outlined, size: 18),
+                label: Text(
+                  _downloadingTripIds.contains(trip.id)
+                      ? 'Downloading...'
+                      : 'Download as PDF',
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.black,
+                  side: const BorderSide(color: green),
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _showTripDetails(Trip trip) async {
+    String time(Map<String, dynamic> movement, String key) {
+      final value = DateTime.tryParse('${movement[key] ?? ''}')?.toLocal();
+      return value == null ? 'Not recorded' : _formatDateTime(value);
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(trip.route),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Status: ${trip.status}'),
+              for (final movement in trip.movements) ...[
+                const SizedBox(height: 10),
+                Text(
+                  'Movement ${movement['movement_no']}: ${movement['origin']} to ${movement['destination']}',
+                ),
+                Text('Departure: ${time(movement, 'actual_departure_at')}'),
+                Text('Arrival: ${time(movement, 'actual_arrival_at')}'),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDateTime(DateTime value) =>
+      '${_month(value.month)} ${value.day}, ${value.year} ${value.hour == 0 ? 12 : (value.hour > 12 ? value.hour - 12 : value.hour)}:${value.minute.toString().padLeft(2, '0')} ${value.hour >= 12 ? 'PM' : 'AM'}';
+
+  Future<void> _downloadPdf(String tripId) async {
+    if (_downloadingTripIds.contains(tripId)) return;
+
+    setState(() => _downloadingTripIds.add(tripId));
+    try {
+      final response = await TripService.getTripTicket(int.parse(tripId));
+      final file = File('${Directory.systemTemp.path}/trip_ticket_$tripId.pdf');
+      await file.writeAsBytes(response.bodyBytes, flush: true);
+      final result = await OpenFilex.open(file.path);
+      if (result.type != ResultType.done && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No PDF viewer is available on this phone.'),
+          ),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Unable to download PDF: $error')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _downloadingTripIds.remove(tripId));
+      }
+    }
   }
 
   Widget _buildCompletedBadge() {

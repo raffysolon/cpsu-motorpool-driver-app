@@ -2,12 +2,14 @@
 import 'package:flutter/material.dart';
 import 'package:cpsumotorpooldriverapp/pages/loginpage.dart';
 import 'package:cpsumotorpooldriverapp/pages/dashboard.dart';
-import 'package:cpsumotorpooldriverapp/pages/Addtrip.dart';
 import 'package:cpsumotorpooldriverapp/pages/Mytrip.dart';
 import 'package:cpsumotorpooldriverapp/pages/Notifications.dart';
 import 'package:cpsumotorpooldriverapp/pages/History.dart';
 import 'package:cpsumotorpooldriverapp/pages/ScheduledTrip.dart';
 import 'package:cpsumotorpooldriverapp/pages/splash_screen.dart';
+import 'package:cpsumotorpooldriverapp/pages/create_trip_ticket.dart';
+import 'package:cpsumotorpooldriverapp/pages/settings.dart';
+
 // ===== IMPORTS - END =====
 
 // ===== MAIN ENTRY POINT - START =====
@@ -36,6 +38,10 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         colorSchemeSeed: const Color(0xFF0F8C59), // Main green color
         scaffoldBackgroundColor: const Color(0xFFF5F6F5), // Light background
+        elevatedButtonTheme: ElevatedButtonThemeData(style: _buttonStyle()),
+        filledButtonTheme: FilledButtonThemeData(style: _buttonStyle()),
+        outlinedButtonTheme: OutlinedButtonThemeData(style: _buttonStyle()),
+        textButtonTheme: TextButtonThemeData(style: _buttonStyle()),
       ),
       // ===== THEME SETUP - END =====
       // ===== APP ROUTING - START =====
@@ -50,7 +56,7 @@ class MyApp extends StatelessWidget {
         '/dashboard': (context) =>
             const DriverDashboard(), // DASHBOARD - Main home screen
         '/create-trip': (context) =>
-            const AddTrip(), // ADD TRIP - Create new trip ticket
+            const CreateTripTicket(), // ADD TRIP - Create new trip ticket
         '/my-trips': (context) =>
             const MyTrip(), // MY TRIPS - View current trips
         '/history': (context) =>
@@ -62,9 +68,28 @@ class MyApp extends StatelessWidget {
         '/profile': (context) =>
             const Placeholder(), // TODO: Create Profile page - User profile management
         '/settings': (context) =>
-            const Placeholder(), // TODO: Create Settings page - App settings
+            const SettingsPage(), // Driver profile, password, and logout
       },
       // ===== APP ROUTING - END =====
+    );
+  }
+
+  static ButtonStyle _buttonStyle() {
+    return ButtonStyle(
+      backgroundColor: const WidgetStatePropertyAll(Colors.white),
+      foregroundColor: const WidgetStatePropertyAll(Colors.black),
+      overlayColor: WidgetStatePropertyAll(
+        const Color(0xFF0F8C59).withValues(alpha: 0.10),
+      ),
+      side: const WidgetStatePropertyAll(BorderSide(color: Color(0xFF9FD8BD))),
+      shape: WidgetStatePropertyAll(
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      elevation: const WidgetStatePropertyAll(0),
+      padding: const WidgetStatePropertyAll(
+        EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      ),
+      minimumSize: const WidgetStatePropertyAll(Size(0, 40)),
     );
   }
 }

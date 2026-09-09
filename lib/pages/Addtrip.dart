@@ -1,5 +1,8 @@
 // ===== IMPORTS - START =====
 import 'package:flutter/material.dart';
+
+import '../services/trip_service.dart';
+
 // ===== IMPORTS - END =====
 
 // ===== ADD TRIP PAGE - START =====
@@ -39,6 +42,7 @@ class _AddTripState extends State<AddTrip> {
   ];
 
   final List<String> _startPlaces = [
+    '',
     'CPSU SAN CARLOS',
     'Bacolod',
     'Himamaylan',
@@ -65,11 +69,17 @@ class _AddTripState extends State<AddTrip> {
   final TextEditingController _passengerNameController =
       TextEditingController();
 
+  @override
+  void dispose() {
+    _passengerNameController.dispose();
+    super.dispose();
+  }
+
   /// Currently selected vehicle
   String _selectedVehicle = 'CPSU SAN CARLOS - L300';
 
   /// Currently selected starting location
-  String _selectedStart = 'CPSU SAN CARLOS';
+  String _selectedStart = '';
 
   /// Currently selected destination location
   String _selectedDestination = 'Bacolod';
@@ -82,6 +92,7 @@ class _AddTripState extends State<AddTrip> {
 
   /// Expected arrival date and time
   DateTime _expectedArrival = DateTime(2027, 8, 25, 18, 0);
+  bool _isSaving = false;
   // ===== FORM OPTIONS - END =====
 
   // ===== STEP INDICATOR WIDGET - START =====
@@ -307,6 +318,7 @@ class _AddTripState extends State<AddTrip> {
     );
 
     if (pickedDate == null) return;
+    if (!mounted) return;
 
     final pickedTime = await showTimePicker(
       context: context,
@@ -335,6 +347,24 @@ class _AddTripState extends State<AddTrip> {
         _currentStep += 1;
       });
     } else {
+      _saveTrip();
+    }
+  }
+
+  Future<void> _saveTrip() async {
+    if (_isSaving) return;
+
+    setState(() => _isSaving = true);
+    try {
+      await TripService.createTrip(
+        origin: _selectedStart,
+        destination: _selectedDestination,
+        purpose: _selectedPurpose,
+        scheduledDeparture: _scheduledDeparture,
+        passengers: _passengers,
+      );
+
+      if (!mounted) return;
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -344,12 +374,23 @@ class _AddTripState extends State<AddTrip> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              },
               child: const Text('OK'),
             ),
           ],
         ),
       );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to save trip ticket.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 

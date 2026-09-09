@@ -1,4 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+import '../services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -10,13 +15,59 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final FocusNode _passwordFocusNode = FocusNode();
+  final FocusNode _passwordVisibilityFocusNode = FocusNode(canRequestFocus: false);
   bool _rememberMe = true;
   bool _obscurePassword = true;
+  bool _isLoading = false;
+
+  Future<void> _login() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      _showMessage('Enter your email and password.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final result = await AuthService.login(email, password);
+      if (!mounted) return;
+
+      if ((result['role'] as String?)?.toLowerCase() != 'driver') {
+        _showMessage('This account is not a driver account.');
+        return;
+      }
+
+      Navigator.pushReplacementNamed(context, '/dashboard');
+    } on TimeoutException {
+      if (mounted) {
+        _showMessage('Cannot connect to the server. Check the backend and Wi-Fi.');
+      }
+    } on http.ClientException {
+      if (mounted) {
+        _showMessage('Cannot connect to the server. Check the backend and Wi-Fi.');
+      }
+    } catch (_) {
+      if (mounted) _showMessage('Invalid email or password.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _passwordFocusNode.dispose();
+    _passwordVisibilityFocusNode.dispose();
     super.dispose();
   }
 
@@ -169,6 +220,7 @@ class _LoginPageState extends State<LoginPage> {
                             // ===== PASSWORD TEXT BOX - START =====
                             TextFormField(
                               controller: _passwordController,
+                              focusNode: _passwordFocusNode,
                               obscureText: _obscurePassword,
                               decoration: InputDecoration(
                                 filled: true,
@@ -191,9 +243,13 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                 ),
                                 suffixIcon: IconButton(
+                                  focusNode: _passwordVisibilityFocusNode,
                                   onPressed: () {
                                     setState(() {
                                       _obscurePassword = !_obscurePassword;
+                                    });
+                                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                                      if (mounted) _passwordFocusNode.requestFocus();
                                     });
                                   },
                                   icon: Icon(
@@ -234,23 +290,6 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                 ),
                                 const Spacer(),
-                                TextButton(
-                                  onPressed: () {},
-                                  style: TextButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    minimumSize: Size.zero,
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                  ),
-                                  child: const Text(
-                                    'Forgot password?',
-                                    style: TextStyle(
-                                      color: green,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
                               ],
                             ),
                             const SizedBox(height: 18),
@@ -260,11 +299,7 @@ class _LoginPageState extends State<LoginPage> {
                               width: double.infinity,
                               height: 50,
                               child: ElevatedButton(
-                                onPressed: () {
-                                  // TODO: Add actual login validation here
-                                  // For now, navigate to dashboard
-                                  Navigator.pushNamed(context, '/dashboard');
-                                },
+                                onPressed: _isLoading ? null : _login,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: darkGreen,
                                   foregroundColor: Colors.white,
@@ -273,14 +308,38 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                   elevation: 0,
                                 ),
-                                child: const Text(
-                                  'LOG IN',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
+                                child: _isLoading
+                                    ? const Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2.5,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          SizedBox(width: 10),
+                                          Text(
+                                            'LOGGING IN...',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w700,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : const Text(
+                                        'LOG IN',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
                               ),
                             ),
 
