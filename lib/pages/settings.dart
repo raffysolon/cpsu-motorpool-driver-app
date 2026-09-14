@@ -106,9 +106,9 @@ class _SettingsPageState extends State<SettingsPage> {
         foregroundColor: AppColors.navy,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Settings',
-          style: TextStyle(fontWeight: FontWeight.w800),
+          style: AppTypography.displayTitle(fontWeight: FontWeight.w800),
         ),
         centerTitle: true,
       ),

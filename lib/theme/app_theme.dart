@@ -16,6 +16,102 @@ class AppColors {
   static const Color glassBorder = Color(0xB3FFFFFF);
 }
 
+class AppTypography {
+  AppTypography._();
+
+  static const String body = 'CustomFont';
+  static const String display = 'Playfair Display';
+  static const String label = 'Oswald';
+
+  static TextStyle displayTitle({
+    Color? color,
+    double fontSize = 26,
+    FontWeight fontWeight = FontWeight.w800,
+    double? letterSpacing,
+    double? height,
+  }) =>
+      TextStyle(
+        fontFamily: display,
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        color: color,
+        letterSpacing: letterSpacing,
+        height: height,
+      );
+
+  static TextStyle labelCaps({
+    Color? color,
+    double fontSize = 13,
+    FontWeight fontWeight = FontWeight.w600,
+    double letterSpacing = 1.2,
+  }) =>
+      TextStyle(
+        fontFamily: label,
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        color: color,
+        letterSpacing: letterSpacing,
+      );
+
+  static TextStyle bodyStyle({
+    Color? color,
+    double fontSize = 14,
+    FontWeight fontWeight = FontWeight.w400,
+    double? height,
+    double? letterSpacing,
+  }) =>
+      TextStyle(
+        fontFamily: body,
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        color: color,
+        height: height,
+        letterSpacing: letterSpacing,
+      );
+
+  static TextStyle buttonLabel({
+    Color? color,
+    double fontSize = 16,
+    FontWeight fontWeight = FontWeight.w700,
+    double letterSpacing = 0.3,
+  }) =>
+      TextStyle(
+        fontFamily: body,
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        color: color,
+        letterSpacing: letterSpacing,
+      );
+
+  static TextTheme textTheme(TextTheme base) => base
+      .apply(
+        fontFamily: body,
+        displayColor: AppColors.navy,
+        bodyColor: AppColors.navy,
+      )
+      .copyWith(
+        displayLarge: displayTitle(fontSize: 32),
+        displayMedium: displayTitle(fontSize: 28),
+        displaySmall: displayTitle(fontSize: 24),
+        headlineLarge: displayTitle(fontSize: 26),
+        headlineMedium: displayTitle(fontSize: 22, fontWeight: FontWeight.w700),
+        headlineSmall: displayTitle(fontSize: 20, fontWeight: FontWeight.w700),
+        titleLarge: bodyStyle(fontSize: 18, fontWeight: FontWeight.w700),
+        titleMedium: bodyStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        titleSmall: bodyStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        bodyLarge: bodyStyle(fontSize: 16),
+        bodyMedium: bodyStyle(fontSize: 14),
+        bodySmall: bodyStyle(fontSize: 12, color: AppColors.mutedDark),
+        labelLarge: buttonLabel(fontSize: 14),
+        labelMedium: labelCaps(fontSize: 12, letterSpacing: 1.0),
+        labelSmall: labelCaps(
+          fontSize: 10,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 1.1,
+        ),
+      );
+}
+
 class GlassCard extends StatelessWidget {
   const GlassCard({
     super.key,

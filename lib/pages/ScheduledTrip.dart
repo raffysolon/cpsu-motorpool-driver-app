@@ -179,9 +179,9 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Scheduled Trips',
-          style: TextStyle(
+          style: AppTypography.displayTitle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.5,
@@ -340,29 +340,31 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage> {
         border: Border.all(color: green),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: const Text(
+      child: Text(
         'SCHEDULED',
-        style: TextStyle(
+        style: AppTypography.labelCaps(
           color: green,
           fontSize: 10,
           fontWeight: FontWeight.w700,
+          letterSpacing: 0,
         ),
       ),
     );
   }
 
   Widget _buildDepartingSoonLabel() {
-    return const Row(
+    return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(Icons.schedule_outlined, color: green, size: 16),
         SizedBox(width: 4),
         Text(
           'Departing soon',
-          style: TextStyle(
+          style: AppTypography.labelCaps(
             color: green,
             fontSize: 11,
             fontWeight: FontWeight.w600,
+            letterSpacing: 0,
           ),
         ),
       ],
@@ -424,9 +426,9 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage> {
             child: const Icon(Icons.schedule_outlined, size: 44, color: green),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'No upcoming trips scheduled',
-            style: TextStyle(
+            style: AppTypography.bodyStyle(
               color: textColor,
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -446,7 +448,7 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage> {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFB9DEC9)),
       ),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(Icons.print_outlined, color: green, size: 20),
@@ -454,7 +456,7 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage> {
           Expanded(
             child: Text(
               'You must log in to desktop to print the trip ticket.',
-              style: TextStyle(
+              style: AppTypography.bodyStyle(
                 color: textColor,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -477,7 +479,7 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage> {
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
+                children: [
                   SizedBox(
                     width: 42,
                     height: 42,
@@ -486,10 +488,16 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage> {
                   SizedBox(height: 18),
                   Text(
                     'Opening trip ticket...',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                    style: AppTypography.bodyStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   SizedBox(height: 6),
-                  Text('Please wait', style: TextStyle(color: Colors.black54)),
+                  Text(
+                    'Please wait',
+                    style: AppTypography.bodyStyle(color: Colors.black54),
+                  ),
                 ],
               ),
             ),
@@ -534,7 +542,7 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage> {
         const SizedBox(width: 4),
         Text(
           label,
-          style: TextStyle(
+          style: AppTypography.bodyStyle(
             color: color,
             fontSize: 11,
             fontWeight: FontWeight.w700,

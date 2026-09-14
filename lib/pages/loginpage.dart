@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../services/auth_service.dart';
+import '../theme/app_theme.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -189,22 +190,20 @@ class _LoginPageState extends State<LoginPage>
           ),
         ),
         const SizedBox(height: 16),
-        const Text(
+        Text(
           'CPSU Motor Pool',
-          style: TextStyle(
+          style: AppTypography.displayTitle(
             color: Colors.white,
             fontSize: 24,
-            fontWeight: FontWeight.w800,
             letterSpacing: 0.2,
           ),
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Driver Operations',
-          style: TextStyle(
+          style: AppTypography.labelCaps(
             color: Color(0xFFB7E4C7),
             fontSize: 13,
-            fontWeight: FontWeight.w600,
             letterSpacing: 1.3,
           ),
         ),
@@ -212,7 +211,7 @@ class _LoginPageState extends State<LoginPage>
         Text(
           'Sign in to manage trips and vehicle readiness.',
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: AppTypography.bodyStyle(
             color: Colors.white.withValues(alpha: 0.82),
             fontSize: 14,
             height: 1.4,
@@ -245,24 +244,27 @@ class _LoginPageState extends State<LoginPage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Sign in',
-                style: TextStyle(
+                style: AppTypography.displayTitle(
                   color: _textDark,
                   fontSize: 24,
-                  fontWeight: FontWeight.w800,
                   letterSpacing: -0.3,
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'Use your driver credentials to continue.',
-                style: TextStyle(color: _textMuted, fontSize: 14, height: 1.4),
+                style: AppTypography.bodyStyle(
+                  color: _textMuted,
+                  fontSize: 14,
+                  height: 1.4,
+                ),
               ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'Email',
-                style: TextStyle(
+                style: AppTypography.bodyStyle(
                   color: _textDark,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -289,9 +291,11 @@ class _LoginPageState extends State<LoginPage>
                     _passwordFocusNode.requestFocus();
                   },
                   onSubmitted: (_) => _passwordFocusNode.requestFocus(),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'name@cpsu.edu.ph',
-                    hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
+                    hintStyle: AppTypography.bodyStyle(
+                      color: Color(0xFF9CA3AF),
+                    ),
                     border: InputBorder.none,
                     contentPadding:
                         EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -304,9 +308,9 @@ class _LoginPageState extends State<LoginPage>
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Password',
-                style: TextStyle(
+                style: AppTypography.bodyStyle(
                   color: _textDark,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -336,7 +340,9 @@ class _LoginPageState extends State<LoginPage>
                   onSubmitted: (_) => _login(),
                   decoration: InputDecoration(
                     hintText: 'Enter your password',
-                    hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+                    hintStyle: AppTypography.bodyStyle(
+                      color: Color(0xFF9CA3AF),
+                    ),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -382,9 +388,9 @@ class _LoginPageState extends State<LoginPage>
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Text(
+                  Text(
                     'Remember me',
-                    style: TextStyle(
+                    style: AppTypography.bodyStyle(
                       color: _textDark,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
@@ -417,12 +423,10 @@ class _LoginPageState extends State<LoginPage>
                             color: Colors.white,
                           ),
                         )
-                      : const Text(
+                      : Text(
                           'Log in',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.3,
+                          style: AppTypography.buttonLabel(
+                            color: Colors.white,
                           ),
                         ),
                 ),

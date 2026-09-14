@@ -90,21 +90,20 @@ class _SplashScreenState extends State<SplashScreen>
             children: [
               _buildLoadingIcon(),
               const SizedBox(height: 28),
-              const Text(
+              Text(
                 'CPSU Motorpool',
-                style: TextStyle(
+                style: AppTypography.displayTitle(
                   color: textColor,
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Checking your session…',
-                style: TextStyle(
+                style: AppTypography.bodyStyle(
                   color: mutedColor,
                   fontSize: 14,
-                  fontWeight: FontWeight.w400,
                 ),
               ),
               const SizedBox(height: 20),

@@ -120,12 +120,13 @@ class _AddTripState extends State<AddTrip> {
             child: Center(
               child: Text(
                 '${index + 1}',
-                style: TextStyle(
+                style: AppTypography.labelCaps(
                   color: isActive || isDone
                       ? Colors.white
                       : const Color(0xFF6A6A6A),
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
+                  letterSpacing: 0,
                 ),
               ),
             ),
@@ -138,12 +139,13 @@ class _AddTripState extends State<AddTrip> {
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
+              style: AppTypography.labelCaps(
                 fontSize: 10,
                 color: isActive || isDone ? green : const Color(0xFF6A6A6A),
                 fontWeight: isActive || isDone
                     ? FontWeight.w700
                     : FontWeight.w500,
+                letterSpacing: 0,
               ),
             ),
           ),
@@ -443,7 +445,10 @@ class _AddTripState extends State<AddTrip> {
             ElevatedButton(
               onPressed: _addPassengerFromInput,
               style: ElevatedButton.styleFrom(backgroundColor: green),
-              child: const Text('Add', style: TextStyle(color: Colors.white)),
+              child: Text(
+                'Add',
+                style: AppTypography.buttonLabel(color: Colors.white),
+              ),
             ),
           ],
         );
@@ -669,11 +674,10 @@ class _AddTripState extends State<AddTrip> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'NEXT',
-                  style: TextStyle(
+                  style: AppTypography.buttonLabel(
                     fontSize: 18,
-                    fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
                 ),
@@ -685,11 +689,10 @@ class _AddTripState extends State<AddTrip> {
         return Column(
           children: [
             const SizedBox(height: 10),
-            const Text(
+            Text(
               'List of Passengers',
-              style: TextStyle(
+              style: AppTypography.displayTitle(
                 fontSize: 20,
-                fontWeight: FontWeight.w700,
                 color: textColor,
               ),
             ),
@@ -703,10 +706,13 @@ class _AddTripState extends State<AddTrip> {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: borderColor, width: 1.2),
                 ),
-                child: const Text(
+                child: Text(
                   'No passengers added yet.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: Color(0xFF6A6A6A)),
+                  style: AppTypography.bodyStyle(
+                    fontSize: 14,
+                    color: Color(0xFF6A6A6A),
+                  ),
                 ),
               )
             else
@@ -725,9 +731,9 @@ class _AddTripState extends State<AddTrip> {
                   ),
                 ),
                 icon: const Icon(Icons.add),
-                label: const Text(
+                label: Text(
                   'ADD PASSENGER',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                  style: AppTypography.buttonLabel(fontSize: 15),
                 ),
               ),
             ),
@@ -743,11 +749,10 @@ class _AddTripState extends State<AddTrip> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'NEXT',
-                  style: TextStyle(
+                  style: AppTypography.buttonLabel(
                     fontSize: 18,
-                    fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
                 ),
@@ -759,11 +764,10 @@ class _AddTripState extends State<AddTrip> {
         return Column(
           children: [
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Please review your trip details',
-              style: TextStyle(
+              style: AppTypography.displayTitle(
                 fontSize: 18,
-                fontWeight: FontWeight.w700,
                 color: textColor,
               ),
             ),
@@ -813,11 +817,10 @@ class _AddTripState extends State<AddTrip> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'NEXT',
-                  style: TextStyle(
+                  style: AppTypography.buttonLabel(
                     fontSize: 18,
-                    fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
                 ),
@@ -846,9 +849,9 @@ class _AddTripState extends State<AddTrip> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: _goToPreviousStep,
         ),
-        title: const Text(
+        title: Text(
           'Create Trip Ticket',
-          style: TextStyle(
+          style: AppTypography.displayTitle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.5,

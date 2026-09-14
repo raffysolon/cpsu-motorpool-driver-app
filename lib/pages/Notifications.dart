@@ -85,7 +85,7 @@ class _NotificationsState extends State<Notifications> {
                             ),
                             title: Text(
                               (notification['message'] ?? 'Notification').toString(),
-                              style: TextStyle(
+                              style: AppTypography.bodyStyle(
                                 fontWeight: isRead ? FontWeight.normal : FontWeight.w700,
                               ),
                             ),

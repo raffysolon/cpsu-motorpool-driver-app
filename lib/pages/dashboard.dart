@@ -213,9 +213,9 @@ class _DriverDashboardState extends State<DriverDashboard> {
         backgroundColor: AppColors.glassFill,
         foregroundColor: AppColors.navy,
         surfaceTintColor: Colors.transparent,
-        title: const Text(
+        title: Text(
           'CPSU MOTORPOOL',
-          style: TextStyle(
+          style: AppTypography.displayTitle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.5,
@@ -352,10 +352,10 @@ class _DriverDashboardState extends State<DriverDashboard> {
                                     ),
                                   ),
                                   const SizedBox(width: 14),
-                                  const Expanded(
+                                  Expanded(
                                     child: Text(
                                       'Settings',
-                                      style: TextStyle(
+                                      style: AppTypography.bodyStyle(
                                         color: textColor,
                                         fontSize: 15,
                                         fontWeight: FontWeight.w600,
@@ -407,13 +407,12 @@ class _DriverDashboardState extends State<DriverDashboard> {
                                     ),
                                   ),
                                   const SizedBox(width: 14),
-                                  const Expanded(
+                                  Expanded(
                                     child: Text(
                                       'Logout',
-                                      style: TextStyle(
+                                      style: AppTypography.buttonLabel(
                                         color: Color(0xFFC62828),
                                         fontSize: 15,
-                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
                                   ),
@@ -451,16 +450,19 @@ class _DriverDashboardState extends State<DriverDashboard> {
               /// Welcome greeting for the driver
               Text(
                 'Welcome, $_driverFirstName!',
-                style: TextStyle(
+                style: AppTypography.displayTitle(
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
                   color: textColor,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'What would you like to do today?',
-                style: TextStyle(fontSize: 16, color: Color(0xFF7C7C7C)),
+                style: AppTypography.bodyStyle(
+                  fontSize: 16,
+                  color: Color(0xFF7C7C7C),
+                ),
               ),
               const SizedBox(height: 40),
               // ===== WELCOME MESSAGE SECTION - END =====
@@ -502,19 +504,21 @@ class _DriverDashboardState extends State<DriverDashboard> {
                           child: const Icon(Icons.add, size: 48, color: green),
                         ),
                         const SizedBox(height: 16),
-                        const Text(
+                        Text(
                           'Create Trip Ticket',
-                          style: TextStyle(
+                          style: AppTypography.buttonLabel(
                             fontSize: 20,
-                            fontWeight: FontWeight.w700,
                             color: Colors.white,
                             letterSpacing: 0.3,
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
+                        Text(
                           'Start a new trip request',
-                          style: TextStyle(fontSize: 13, color: Colors.white70),
+                          style: AppTypography.bodyStyle(
+                            fontSize: 13,
+                            color: Colors.white70,
+                          ),
                         ),
                       ],
                     ),
@@ -548,10 +552,10 @@ class _DriverDashboardState extends State<DriverDashboard> {
                             ),
                             child: Text(
                               _activeTrip != null ? 'IN PROGRESS' : 'ACTIVE',
-                              style: TextStyle(
+                              style: AppTypography.labelCaps(
                                 color: Colors.white,
                                 fontSize: 10,
-                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0,
                               ),
                             ),
                           ),
@@ -574,12 +578,12 @@ class _DriverDashboardState extends State<DriverDashboard> {
                       const SizedBox(height: 12),
 
                       if (_activeTrip == null)
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.only(top: 24, bottom: 24),
                           child: Center(
                             child: Text(
                               'No active trips right now',
-                              style: TextStyle(
+                              style: AppTypography.bodyStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                                 color: Color(0xFF7C7C7C),
@@ -591,7 +595,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
                         // Trip Details
                         Text(
                           _activeRoute(),
-                          style: TextStyle(
+                          style: AppTypography.displayTitle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                             color: textColor,
@@ -609,16 +613,17 @@ class _DriverDashboardState extends State<DriverDashboard> {
                               children: [
                                 Text(
                                   'Vehicle',
-                                  style: TextStyle(
+                                  style: AppTypography.labelCaps(
                                     fontSize: 11,
                                     color: Color(0xFF7C7C7C),
                                     fontWeight: FontWeight.w500,
+                                    letterSpacing: 0,
                                   ),
                                 ),
                                 SizedBox(height: 4),
                                 Text(
                                   _activeVehicle(),
-                                  style: TextStyle(
+                                  style: AppTypography.bodyStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
                                     color: green,
@@ -636,16 +641,17 @@ class _DriverDashboardState extends State<DriverDashboard> {
                               children: [
                                 Text(
                                   'Departure',
-                                  style: TextStyle(
+                                  style: AppTypography.labelCaps(
                                     fontSize: 11,
                                     color: Color(0xFF7C7C7C),
                                     fontWeight: FontWeight.w500,
+                                    letterSpacing: 0,
                                   ),
                                 ),
                                 SizedBox(height: 4),
                                 Text(
                                   _activeDeparture(),
-                                  style: TextStyle(
+                                  style: AppTypography.bodyStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
                                     color: green,
@@ -661,10 +667,11 @@ class _DriverDashboardState extends State<DriverDashboard> {
                               children: [
                                 Text(
                                   'Status',
-                                  style: TextStyle(
+                                  style: AppTypography.labelCaps(
                                     fontSize: 11,
                                     color: Color(0xFF7C7C7C),
                                     fontWeight: FontWeight.w500,
+                                    letterSpacing: 0,
                                   ),
                                 ),
                                 SizedBox(height: 4),
@@ -673,10 +680,11 @@ class _DriverDashboardState extends State<DriverDashboard> {
                                     _activeTrip?['status'] ??
                                         _activeTrip?['effective_status'],
                                   ),
-                                  style: TextStyle(
+                                  style: AppTypography.labelCaps(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
                                     color: green,
+                                    letterSpacing: 0,
                                   ),
                                 ),
 
@@ -964,7 +972,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
             children: [
               Text(
                 action,
-                style: TextStyle(
+                style: AppTypography.displayTitle(
                   color: textColor,
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
@@ -1071,7 +1079,10 @@ class _DriverDashboardState extends State<DriverDashboard> {
                   (route) => false,
                 );
               },
-              child: const Text('Logout', style: TextStyle(color: Colors.red)),
+              child: Text(
+                'Logout',
+                style: AppTypography.buttonLabel(color: Colors.red),
+              ),
             ),
           ],
         );

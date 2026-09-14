@@ -1,5 +1,6 @@
 // ===== IMPORTS - START =====
 import 'package:flutter/material.dart';
+import 'package:cpsumotorpooldriverapp/theme/app_theme.dart';
 import 'package:cpsumotorpooldriverapp/pages/loginpage.dart';
 import 'package:cpsumotorpooldriverapp/pages/dashboard.dart';
 import 'package:cpsumotorpooldriverapp/pages/Mytrip.dart';
@@ -38,6 +39,8 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         colorSchemeSeed: const Color(0xFF0F8C59), // Main green color
         scaffoldBackgroundColor: const Color(0xFFF5F6F5), // Light background
+        fontFamily: AppTypography.body,
+        textTheme: AppTypography.textTheme(ThemeData.light().textTheme),
         elevatedButtonTheme: ElevatedButtonThemeData(style: _buttonStyle()),
         filledButtonTheme: FilledButtonThemeData(style: _buttonStyle()),
         outlinedButtonTheme: OutlinedButtonThemeData(style: _buttonStyle()),

@@ -240,9 +240,9 @@ class _MyTripState extends State<MyTrip> {
         backgroundColor: AppColors.glassFill,
         foregroundColor: AppColors.navy,
         surfaceTintColor: Colors.transparent,
-        title: const Text(
+        title: Text(
           'My Trips',
-          style: TextStyle(
+          style: AppTypography.displayTitle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.5,
@@ -302,7 +302,7 @@ class _MyTripState extends State<MyTrip> {
               label: Text(filter),
               selected: selected,
               showCheckmark: false,
-              labelStyle: TextStyle(
+              labelStyle: AppTypography.bodyStyle(
                 color: selected ? Colors.white : AppColors.mutedDark,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -425,10 +425,11 @@ class _MyTripState extends State<MyTrip> {
       ),
       child: Text(
         status,
-        style: TextStyle(
+        style: AppTypography.labelCaps(
           color: color,
           fontSize: 11,
           fontWeight: FontWeight.w700,
+          letterSpacing: 0,
         ),
       ),
     );
@@ -485,9 +486,9 @@ class _MyTripState extends State<MyTrip> {
         children: [
           Icon(Icons.receipt_long_outlined, size: 52, color: green),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'No trips found',
-            style: TextStyle(
+            style: AppTypography.bodyStyle(
               color: textColor,
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -507,7 +508,7 @@ class _MyTripState extends State<MyTrip> {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFB9DEC9)),
       ),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(Icons.print_outlined, color: green, size: 20),
@@ -515,7 +516,7 @@ class _MyTripState extends State<MyTrip> {
           Expanded(
             child: Text(
               'You must log in to desktop to print the trip ticket.',
-              style: TextStyle(
+              style: AppTypography.bodyStyle(
                 color: textColor,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -538,7 +539,7 @@ class _MyTripState extends State<MyTrip> {
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
+                children: [
                   SizedBox(
                     width: 42,
                     height: 42,
@@ -547,10 +548,16 @@ class _MyTripState extends State<MyTrip> {
                   SizedBox(height: 18),
                   Text(
                     'Opening trip ticket...',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                    style: AppTypography.bodyStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   SizedBox(height: 6),
-                  Text('Please wait', style: TextStyle(color: Colors.black54)),
+                  Text(
+                    'Please wait',
+                    style: AppTypography.bodyStyle(color: Colors.black54),
+                  ),
                 ],
               ),
             ),

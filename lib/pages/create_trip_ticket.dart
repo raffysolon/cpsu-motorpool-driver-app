@@ -87,9 +87,9 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
         foregroundColor: AppColors.navy,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Create Trip Ticket',
-          style: TextStyle(fontWeight: FontWeight.w800),
+          style: AppTypography.displayTitle(fontWeight: FontWeight.w800),
         ),
         centerTitle: true,
       ),
@@ -158,7 +158,7 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
           Text(
             label,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: AppTypography.bodyStyle(
               color: color,
               fontSize: 11,
               fontWeight: active || complete
@@ -384,13 +384,13 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: line),
               ),
-              child: const Column(
+              child: Column(
                 children: [
                   Icon(Icons.people_outline, color: muted, size: 34),
                   SizedBox(height: 8),
                   Text(
                     'No passengers added yet.',
-                    style: TextStyle(color: muted, fontSize: 13),
+                    style: AppTypography.bodyStyle(color: muted, fontSize: 13),
                   ),
                 ],
               ),
@@ -490,9 +490,9 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
   Widget buildReview() {
     final passengerRows = passengers.isEmpty
         ? <Widget>[
-            const Text(
+            Text(
               'No passengers added.',
-              style: TextStyle(color: muted, fontSize: 13),
+              style: AppTypography.bodyStyle(color: muted, fontSize: 13),
             ),
           ]
         : passengers.map((passenger) {
