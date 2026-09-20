@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -33,7 +34,7 @@ class HistoryPage extends StatefulWidget {
   State<HistoryPage> createState() => _HistoryPageState();
 }
 
-class _HistoryPageState extends State<HistoryPage> {
+class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
   static const Color green = AppColors.primary;
   static const Color softGreen = AppColors.mint;
   static const Color textColor = AppColors.navy;
@@ -48,30 +49,92 @@ class _HistoryPageState extends State<HistoryPage> {
 
   String _selectedFilter = 'All time';
   bool _isLoading = true;
+  bool _isPageVisible = true;
+  bool _isRefreshRunning = false;
+  bool _isDialogOpen = false;
   final Set<String> _downloadingTripIds = {};
   List<Trip> _trips = [];
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadTrips();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (!mounted || !_isPageVisible || _isDialogOpen || _isRefreshRunning) return;
+      _loadTrips(background: true);
+    });
   }
 
-  Future<void> _loadTrips() async {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _isPageVisible = true;
+      if (!_isRefreshRunning) {
+        _loadTrips(background: true);
+      }
+    } else if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      _isPageVisible = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  Future<void> _loadTrips({bool background = false}) async {
+    if (background) {
+      if (_isRefreshRunning || !mounted || !_isPageVisible || _isDialogOpen) return;
+      _isRefreshRunning = true;
+    } else if (mounted) {
+      setState(() => _isLoading = true);
+    }
+
     try {
       final rawTrips = await TripService.getMyTrips(status: 'completed');
+      final nextTrips = rawTrips.map(_tripFromApi).toList();
       if (!mounted) return;
-      setState(() {
-        _trips = rawTrips.map(_tripFromApi).toList();
-        _isLoading = false;
-      });
+      if (!background || _hasTripsChanged(nextTrips)) {
+        setState(() {
+          _trips = nextTrips;
+          _isLoading = false;
+        });
+      }
     } catch (_) {
+      if (background) return;
       if (!mounted) return;
       setState(() {
         _trips = [];
         _isLoading = false;
       });
+    } finally {
+      if (background) {
+        _isRefreshRunning = false;
+      }
     }
+  }
+
+  bool _hasTripsChanged(List<Trip> nextTrips) {
+    if (_trips.length != nextTrips.length) return true;
+    for (var i = 0; i < nextTrips.length; i++) {
+      final current = _trips[i];
+      final next = nextTrips[i];
+      if (current.id != next.id ||
+          current.route != next.route ||
+          current.date != next.date ||
+          current.distance != next.distance ||
+          current.duration != next.duration ||
+          current.status != next.status) {
+        return true;
+      }
+    }
+    return false;
   }
 
   Trip _tripFromApi(Map<String, dynamic> data) {

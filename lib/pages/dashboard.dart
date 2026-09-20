@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
@@ -18,7 +20,8 @@ class DriverDashboard extends StatefulWidget {
 // ===== DRIVER DASHBOARD STATE - START =====
 /// State class for DriverDashboard
 /// Manages dashboard UI and navigation
-class _DriverDashboardState extends State<DriverDashboard> {
+class _DriverDashboardState extends State<DriverDashboard>
+    with WidgetsBindingObserver {
   // ===== COLOR THEME - START =====
   /// Main green color for app branding
   static const Color green = AppColors.primary;
@@ -48,17 +51,52 @@ class _DriverDashboardState extends State<DriverDashboard> {
   String _driverEmail = '';
   String _activeAction = 'Start Trip';
   Map<String, dynamic>? _activeTrip;
+  bool _isPageVisible = true;
+  bool _isRefreshRunning = false;
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadNotificationCount();
     _loadTripCounts();
     _loadDriverAccount();
     _loadActiveAction();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (!mounted || !_isPageVisible || _isRefreshRunning) return;
+      _loadTripCounts(background: true);
+      _loadActiveAction(background: true);
+    });
   }
 
-  Future<void> _loadActiveAction() async {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _isPageVisible = true;
+      if (!_isRefreshRunning) {
+        _loadTripCounts(background: true);
+        _loadActiveAction(background: true);
+      }
+    } else if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      _isPageVisible = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  Future<void> _loadActiveAction({bool background = false}) async {
+    if (background) {
+      if (_isRefreshRunning || !mounted || !_isPageVisible) return;
+      _isRefreshRunning = true;
+    }
     try {
       final trips = await TripService.getMyTrips();
       Map<String, dynamic>? selectedTrip;
@@ -82,54 +120,63 @@ class _DriverDashboardState extends State<DriverDashboard> {
         }
       }
 
-      if (selectedTrip == null) {
-        if (mounted) {
-          setState(() {
-            _activeTrip = null;
-            _activeAction = 'Start Trip';
-          });
-        }
-        return;
-      }
-
-      final movements =
-          (selectedTrip['movements'] is List
-                  ? selectedTrip['movements'] as List
-                  : const [])
-              .whereType<Map>()
-              .toList();
-      final outboundMatches = movements
-          .where((item) => '${item['movement_no']}' == '1')
-          .toList();
-      final returnMatches = movements
-          .where((item) => '${item['movement_no']}' == '2')
-          .toList();
-      final outbound = outboundMatches.isEmpty ? null : outboundMatches.first;
-      final returnMovement = returnMatches.isEmpty ? null : returnMatches.first;
-      final action = selectedStatus == 'active'
-          ? ('${returnMovement?['status'] ?? ''}' == 'active'
-                ? 'End Return Trip'
-                : '${outbound?['status'] ?? ''}' == 'active'
-                ? 'End Trip'
-                : '${outbound?['status'] ?? ''}' == 'completed'
-                ? 'Start Return Trip'
-                : 'Start Trip')
-          : '${returnMovement?['status'] ?? ''}' == 'active'
-          ? 'End Return Trip'
-          : '${outbound?['status'] ?? ''}' == 'scheduled'
+      final nextTrip = selectedTrip;
+      final nextAction = selectedTrip == null
           ? 'Start Trip'
-          : '${outbound?['status'] ?? ''}' == 'active'
-          ? 'End Trip'
-          : '${outbound?['status'] ?? ''}' == 'completed'
-          ? 'Start Return Trip'
-          : 'Start Trip';
+          : _computeActiveAction(nextTrip, selectedStatus);
 
       if (!mounted) return;
-      setState(() {
-        _activeTrip = selectedTrip;
-        _activeAction = action;
-      });
-    } catch (_) {}
+      if (!background || nextTrip != _activeTrip || nextAction != _activeAction) {
+        setState(() {
+          _activeTrip = nextTrip;
+          _activeAction = nextAction;
+        });
+      }
+    } catch (_) {
+      if (background) return;
+    } finally {
+      if (background) {
+        _isRefreshRunning = false;
+      }
+    }
+  }
+
+  String _computeActiveAction(Map<String, dynamic>? selectedTrip, String selectedStatus) {
+    if (selectedTrip == null) return 'Start Trip';
+
+    final movements =
+        (selectedTrip['movements'] is List
+                ? selectedTrip['movements'] as List
+                : const [])
+            .whereType<Map>()
+            .toList();
+    final outboundMatches = movements
+        .where((item) => '${item['movement_no']}' == '1')
+        .toList();
+    final returnMatches = movements
+        .where((item) => '${item['movement_no']}' == '2')
+        .toList();
+    final outbound = outboundMatches.isEmpty ? null : outboundMatches.first;
+    final returnMovement = returnMatches.isEmpty ? null : returnMatches.first;
+    final action = selectedStatus == 'active'
+        ? ('${returnMovement?['status'] ?? ''}' == 'active'
+              ? 'End Return Trip'
+              : '${outbound?['status'] ?? ''}' == 'active'
+              ? 'End Trip'
+              : '${outbound?['status'] ?? ''}' == 'completed'
+              ? 'Start Return Trip'
+              : 'Start Trip')
+        : '${returnMovement?['status'] ?? ''}' == 'active'
+        ? 'End Return Trip'
+        : '${outbound?['status'] ?? ''}' == 'scheduled'
+        ? 'Start Trip'
+        : '${outbound?['status'] ?? ''}' == 'active'
+        ? 'End Trip'
+        : '${outbound?['status'] ?? ''}' == 'completed'
+        ? 'Start Return Trip'
+        : 'Start Trip';
+
+    return action;
   }
 
   Future<void> _loadDriverAccount() async {
@@ -160,7 +207,7 @@ class _DriverDashboardState extends State<DriverDashboard> {
     }
   }
 
-  Future<void> _loadTripCounts() async {
+  Future<void> _loadTripCounts({bool background = false}) async {
     try {
       final trips = await TripService.getMyTrips();
       var myTripsCount = 0;
@@ -185,12 +232,18 @@ class _DriverDashboardState extends State<DriverDashboard> {
       }
 
       if (!mounted) return;
-      setState(() {
-        _myTripsCount = myTripsCount;
-        _scheduledTripsCount = scheduledTripsCount;
-        _historyCount = historyCount;
-      });
+      final changed = _myTripsCount != myTripsCount ||
+          _scheduledTripsCount != scheduledTripsCount ||
+          _historyCount != historyCount;
+      if (!background || changed) {
+        setState(() {
+          _myTripsCount = myTripsCount;
+          _scheduledTripsCount = scheduledTripsCount;
+          _historyCount = historyCount;
+        });
+      }
     } catch (_) {
+      if (background) return;
       if (!mounted) return;
       setState(() {
         _myTripsCount = 0;

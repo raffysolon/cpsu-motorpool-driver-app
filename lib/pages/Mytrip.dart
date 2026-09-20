@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -32,7 +33,7 @@ class MyTrip extends StatefulWidget {
   State<MyTrip> createState() => _MyTripState();
 }
 
-class _MyTripState extends State<MyTrip> {
+class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
   static const Color green = AppColors.primary;
   static const Color textColor = AppColors.navy;
   static const Color borderColor = AppColors.border;
@@ -48,38 +49,100 @@ class _MyTripState extends State<MyTrip> {
   String _selectedFilter = 'All';
   bool _isLoading = true;
   bool _isOpeningTicket = false;
+  bool _isDialogOpen = false;
+  bool _isPageVisible = true;
+  bool _isRefreshRunning = false;
+  Timer? _refreshTimer;
   List<Trip> _trips = [];
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadTrips();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (!mounted || !_isPageVisible || _isDialogOpen || _isOpeningTicket || _isRefreshRunning) return;
+      _loadTrips(background: true);
+    });
   }
 
-  Future<void> _loadTrips() async {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _isPageVisible = true;
+      if (!_isRefreshRunning) {
+        _loadTrips(background: true);
+      }
+    } else if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      _isPageVisible = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  Future<void> _loadTrips({bool background = false}) async {
+    if (background) {
+      if (_isRefreshRunning || !mounted || !_isPageVisible || _isDialogOpen || _isOpeningTicket) return;
+      _isRefreshRunning = true;
+    } else if (mounted) {
+      setState(() => _isLoading = true);
+    }
+
     try {
       final rawTrips = await TripService.getMyTrips();
+      final nextTrips = rawTrips
+          .where((trip) {
+            final status = (trip['effective_status'] ?? trip['status'] ?? '')
+                .toString()
+                .trim()
+                .toLowerCase();
+            return status != 'completed';
+          })
+          .map(_tripFromApi)
+          .toList();
       if (!mounted) return;
-      setState(() {
-        _trips = rawTrips
-            .where((trip) {
-              final status = (trip['effective_status'] ?? trip['status'] ?? '')
-                  .toString()
-                  .trim()
-                  .toLowerCase();
-              return status != 'completed';
-            })
-            .map(_tripFromApi)
-            .toList();
-        _isLoading = false;
-      });
+      if (!background || _hasTripsChanged(nextTrips)) {
+        setState(() {
+          _trips = nextTrips;
+          _isLoading = false;
+        });
+      }
     } catch (_) {
+      if (background) return;
       if (!mounted) return;
       setState(() {
         _trips = [];
         _isLoading = false;
       });
+    } finally {
+      if (background) {
+        _isRefreshRunning = false;
+      }
     }
+  }
+
+  bool _hasTripsChanged(List<Trip> nextTrips) {
+    if (_trips.length != nextTrips.length) return true;
+    for (var i = 0; i < nextTrips.length; i++) {
+      final current = _trips[i];
+      final next = nextTrips[i];
+      if (current.id != next.id ||
+          current.route != next.route ||
+          current.status != next.status ||
+          current.secondaryStatus != next.secondaryStatus ||
+          current.vehicle != next.vehicle ||
+          current.departureOrDate != next.departureOrDate) {
+        return true;
+      }
+    }
+    return false;
   }
 
   Trip _tripFromApi(Map<String, dynamic> data) {
@@ -189,6 +252,7 @@ class _MyTripState extends State<MyTrip> {
     await NotificationService.markTripNotificationsAsRead(trip.id);
     if (!mounted) return;
 
+    _isDialogOpen = true;
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
@@ -210,7 +274,11 @@ class _MyTripState extends State<MyTrip> {
           ),
         ],
       ),
-    );
+    ).then((_) {
+      if (mounted) {
+        setState(() => _isDialogOpen = false);
+      }
+    });
   }
 
   Widget _detailRow(String label, String value) {
