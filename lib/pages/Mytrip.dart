@@ -43,6 +43,7 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
     'All',
     'Pending',
     'Approved',
+    'Active',
     'Denied',
   ];
 
@@ -155,13 +156,16 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
     final scheduled = data['scheduled_departure']?.toString() ?? '';
     final rawStatus = (data['status'] ?? 'pending').toString();
     final effectiveStatus = (data['effective_status'] ?? rawStatus).toString();
+    final displayStatus = effectiveStatus.trim().toLowerCase() == 'active'
+      ? effectiveStatus
+      : rawStatus;
     final isApprovedScheduled =
         rawStatus.trim().toLowerCase() == 'approved' &&
         effectiveStatus.trim().toLowerCase() == 'scheduled';
     return Trip(
       id: (data['id'] ?? '').toString(),
       route: '$origin to $destination',
-      status: _displayStatus(rawStatus),
+      status: _displayStatus(displayStatus),
       secondaryStatus: isApprovedScheduled ? 'Scheduled' : null,
       vehicle: vehicleName.toString(),
       departureOrDate: _formatDateTime(scheduled),
@@ -435,35 +439,37 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
                   _buildTripDetail('Status', trip.status),
                 ],
               ),
-              Wrap(
-                alignment: WrapAlignment.end,
-                spacing: 10,
-                runSpacing: 8,
+              Row(
                 children: [
-                  OutlinedButton.icon(
-                    onPressed: () => _showTripDetails(trip),
-                    icon: const Icon(Icons.visibility_outlined, size: 18),
-                    label: const Text('View details'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.black,
-                      side: const BorderSide(color: green),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 11,
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _showTripDetails(trip),
+                      icon: const Icon(Icons.visibility_outlined, size: 18),
+                      label: const Text('View Details'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.black,
+                        side: const BorderSide(color: green),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 11,
+                        ),
                       ),
                     ),
                   ),
+                  const SizedBox(width: 10),
                   if (_canViewTicket(trip))
-                    ElevatedButton.icon(
-                      onPressed: () => _openTripTicket(trip.id),
-                      icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
-                      label: const Text('View trip ticket'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: green,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 11,
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _openTripTicket(trip.id),
+                        icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                        label: const Text('View Trip Ticket'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: green,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 11,
+                          ),
                         ),
                       ),
                     ),

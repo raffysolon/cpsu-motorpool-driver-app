@@ -53,6 +53,7 @@ class _DriverDashboardState extends State<DriverDashboard>
   Map<String, dynamic>? _activeTrip;
   bool _isPageVisible = true;
   bool _isRefreshRunning = false;
+  bool _isNotificationCountRunning = false;
   Timer? _refreshTimer;
 
   @override
@@ -64,9 +65,12 @@ class _DriverDashboardState extends State<DriverDashboard>
     _loadDriverAccount();
     _loadActiveAction();
     _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
-      if (!mounted || !_isPageVisible || _isRefreshRunning) return;
-      _loadTripCounts(background: true);
-      _loadActiveAction(background: true);
+      if (!mounted || !_isPageVisible) return;
+      if (!_isRefreshRunning) {
+        _loadTripCounts(background: true);
+        _loadActiveAction(background: true);
+      }
+      _loadNotificationCount(background: true);
     });
   }
 
@@ -78,6 +82,7 @@ class _DriverDashboardState extends State<DriverDashboard>
         _loadTripCounts(background: true);
         _loadActiveAction(background: true);
       }
+      _loadNotificationCount(background: true);
     } else if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden) {
@@ -198,12 +203,21 @@ class _DriverDashboardState extends State<DriverDashboard>
     });
   }
 
-  Future<void> _loadNotificationCount() async {
+  Future<void> _loadNotificationCount({bool background = false}) async {
+    if (background &&
+        (_isNotificationCountRunning || !mounted || !_isPageVisible)) {
+      return;
+    }
+    _isNotificationCountRunning = true;
     try {
       final count = await NotificationService.getUnreadCount();
-      if (mounted) setState(() => unreadNotifications = count);
+      if (mounted && unreadNotifications != count) {
+        setState(() => unreadNotifications = count);
+      }
     } catch (_) {
-      if (mounted) setState(() => unreadNotifications = 0);
+      if (background) return;
+    } finally {
+      _isNotificationCountRunning = false;
     }
   }
 
