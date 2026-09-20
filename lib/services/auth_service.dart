@@ -4,7 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 class AuthService {
-  static const String baseUrl = 'http://10.28.219.243:8000/api';
+  static const String baseUrl = 'https://cpsu-motorpool-backend.onrender.com/api';
   static const _storage = FlutterSecureStorage();
 
   static Future<Map<String, dynamic>> login(
