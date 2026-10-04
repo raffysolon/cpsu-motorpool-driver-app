@@ -40,6 +40,12 @@ class AuthService {
 
   static Future<String?> getEmail() => _storage.read(key: 'email');
 
+  /// Check if user is currently logged in
+  static Future<bool> isLoggedIn() async {
+    final token = await getToken();
+    return token != null && token.isNotEmpty;
+  }
+
   static Future<Map<String, dynamic>> getProfile() async {
     final token = await getToken();
     if (token == null || token.isEmpty) {

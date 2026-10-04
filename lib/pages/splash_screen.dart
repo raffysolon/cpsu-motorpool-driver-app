@@ -1,5 +1,6 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
+import 'package:cpsumotorpooldriverapp/theme/app_theme.dart';
 import 'package:cpsumotorpooldriverapp/pages/dashboard.dart';
 import 'package:cpsumotorpooldriverapp/pages/loginpage.dart';
 import 'package:cpsumotorpooldriverapp/services/auth_service.dart';
@@ -13,174 +14,154 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  static const Color green = AppColors.primary;
-  static const Color softGreen = AppColors.mint;
-  static const Color textColor = AppColors.navy;
-  static const Color mutedColor = Color(0xFF7C7C7C);
-
-  late final AnimationController _animationController;
-  late final Animation<double> _firstDotAnimation;
-  late final Animation<double> _secondDotAnimation;
-  late final Animation<double> _thirdDotAnimation;
+  late final AnimationController _dotsController;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
+    _dotsController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1400),
     )..repeat();
-
-    _firstDotAnimation = _dotAnimation(0.0);
-    _secondDotAnimation = _dotAnimation(0.2);
-    _thirdDotAnimation = _dotAnimation(0.4);
     _startAuthCheck();
-  }
-
-  Animation<double> _dotAnimation(double start) {
-    final end = start + 0.4;
-    return Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Interval(start, end, curve: Curves.easeInOut),
-      ),
-    );
-  }
-
-  Future<void> _startAuthCheck() async {
-    await Future<void>.delayed(const Duration(seconds: 2));
-    if (!mounted) {
-      return;
-    }
-
-    final isAuthenticated = await _checkAuthStatus();
-    if (!mounted) {
-      return;
-    }
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            isAuthenticated ? const DriverDashboard() : const LoginPage(),
-      ),
-    );
-  }
-
-  Future<bool> _checkAuthStatus() async {
-    final token = await AuthService.getToken();
-    return token != null && token.isNotEmpty;
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _dotsController.dispose();
     super.dispose();
+  }
+
+  Future<void> _startAuthCheck() async {
+    await Future<void>.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+
+    final isLoggedIn = await AuthService.isLoggedIn();
+    if (!mounted) return;
+
+    if (isLoggedIn) {
+      // User is logged in, go to dashboard
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const DriverDashboard()),
+      );
+    } else {
+      // Not logged in, go to login page
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: ShellAtmosphere(
-        child: SafeArea(
-          child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildLoadingIcon(),
-              const SizedBox(height: 28),
-              Text(
-                'CPSU Motorpool',
-                style: AppTypography.displayTitle(
-                  color: textColor,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Checking your session…',
-                style: AppTypography.bodyStyle(
-                  color: mutedColor,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 20),
-              _buildBouncingDots(),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF0F3D24), // Dark green
+              Color(0xFF176E30),
+              Color(0xFF1F8A3D),
+              Color(0xFF0B2E1A),
             ],
+            stops: [0.0, 0.35, 0.7, 1.0],
           ),
+        ),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.local_shipping_rounded,
+                      color: Color(0xFF0B8F5A),
+                      size: 30,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'CPSU MOTORPOOL',
+                        style: AppTypography.displayTitle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          letterSpacing: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        'VEHICLE TRACKING SYSTEM',
+                        style: AppTypography.labelCaps(
+                          color: const Color(0xD9FFFFFF),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 1.1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 38),
+              AnimatedBuilder(
+                animation: _dotsController,
+                builder: (context, child) {
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(3, _buildDot),
+                  );
+                },
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'Verifying account access…',
+                style: AppTypography.bodyStyle(
+                  color: const Color(0xB3FFFFFF),
+                  fontSize: 12,
+                  letterSpacing: .3,
+                ),
+              ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildLoadingIcon() {
-    return SizedBox(
-      width: 124,
-      height: 124,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          SizedBox(
-            width: 124,
-            height: 124,
-            child: CircularProgressIndicator(
-              strokeWidth: 4,
-              color: green,
-              backgroundColor: softGreen,
-            ),
-          ),
-          Container(
-            width: 88,
-            height: 88,
+  Widget _buildDot(int index) {
+    final progress = (_dotsController.value + index * .2) % 1;
+    final pulse = (math.sin(progress * math.pi * 2) + 1) / 2;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Opacity(
+        opacity: .45 + pulse * .55,
+        child: Transform.scale(
+          scale: 1 + pulse * .3,
+          child: Container(
+            width: 7,
+            height: 7,
             decoration: const BoxDecoration(
+              color: Colors.white,
               shape: BoxShape.circle,
-              color: softGreen,
             ),
-            child: const Icon(
-              Icons.local_shipping_outlined,
-              color: green,
-              size: 44,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBouncingDots() {
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildDot(_firstDotAnimation.value),
-            const SizedBox(width: 6),
-            _buildDot(_secondDotAnimation.value),
-            const SizedBox(width: 6),
-            _buildDot(_thirdDotAnimation.value),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildDot(double animationValue) {
-    final offset = -5 * Curves.easeOut.transform(animationValue);
-    final opacity = 0.45 + (animationValue * 0.55);
-    return Opacity(
-      opacity: opacity,
-      child: Transform.translate(
-        offset: Offset(0, offset),
-        child: Container(
-          width: 7,
-          height: 7,
-          decoration: const BoxDecoration(
-            color: green,
-            shape: BoxShape.circle,
           ),
         ),
       ),

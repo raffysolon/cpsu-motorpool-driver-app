@@ -54,24 +54,61 @@ class TripService {
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
-  static Future<List<Map<String, dynamic>>> getMyTrips({String? status}) async {
-    final query = status == null || status.isEmpty ? '' : '?status=$status';
+  static Future<List<Map<String, dynamic>>> getMyTrips({
+    String? status,
+    String? search,
+    int page = 1,
+    int perPage = 20,
+  }) async {
+    final queryParams = <String, String>{
+      'page': page.toString(),
+      'per_page': perPage.toString(),
+    };
+    
+    if (status != null && status.isNotEmpty) {
+      queryParams['status'] = status;
+    }
+    if (search != null && search.isNotEmpty) {
+      queryParams['search'] = search;
+    }
+
+    final uri = Uri.parse('${AuthService.baseUrl}/my-trips')
+        .replace(queryParameters: queryParams);
+    
     final token = await AuthService.getToken();
     if (token == null || token.isEmpty) {
       throw Exception('Authentication token not found');
     }
 
     final response = await http.get(
-      Uri.parse('${AuthService.baseUrl}/my-trips$query'),
+      uri,
       headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode != 200) {
+      // Handle specific error codes
+      if (response.statusCode == 401) {
+        throw Exception('Your session has expired. Please log in again.');
+      }
+      if (response.statusCode == 403) {
+        throw Exception('You do not have permission to access trips.');
+      }
+      if (response.statusCode == 429) {
+        throw Exception('Too many requests. Please wait a moment and try again.');
+      }
       throw Exception('Unable to load trips');
     }
 
     final data = jsonDecode(response.body);
-    return (data is List ? data : const [])
+    
+    // Handle paginated response
+    final records = data is Map && data['data'] is List
+        ? data['data'] as List
+        : data is List
+        ? data
+        : const [];
+    
+    return records
         .whereType<Map>()
         .map((trip) => Map<String, dynamic>.from(trip))
         .toList();
@@ -144,9 +181,41 @@ class TripService {
     );
 
     if (response.statusCode != 201) {
+      // Handle specific error codes
+      if (response.statusCode == 401) {
+        throw Exception('Your session has expired. Please log in again.');
+      }
+      if (response.statusCode == 403) {
+        throw Exception('You do not have permission to create trips.');
+      }
+      if (response.statusCode == 422) {
+        // Validation error - could be active trip conflict
+        final error = jsonDecode(response.body);
+        if (error is Map && error['message'] != null) {
+          throw ActiveTripException(
+            error['message'].toString(),
+            error['existing_trip'],
+          );
+        }
+        throw Exception('Unable to create trip ticket: Validation failed');
+      }
+      if (response.statusCode == 429) {
+        throw Exception('Too many requests. Please wait a moment and try again.');
+      }
       throw Exception('Unable to create trip ticket');
     }
 
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
+}
+
+// Custom exception for active trip validation error
+class ActiveTripException implements Exception {
+  final String message;
+  final Map<String, dynamic>? existingTrip;
+  
+  ActiveTripException(this.message, this.existingTrip);
+  
+  @override
+  String toString() => message;
 }

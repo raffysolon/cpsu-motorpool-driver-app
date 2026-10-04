@@ -48,12 +48,12 @@ class MyApp extends StatelessWidget {
       ),
       // ===== THEME SETUP - END =====
       // ===== APP ROUTING - START =====
-      /// Initial route when app starts (Splash screen)
+      /// Initial route when app starts (Splash screen first)
       initialRoute: '/splash',
 
       /// Define all navigation routes for the application
       routes: {
-        '/splash': (context) => const SplashScreen(),
+        '/splash': (context) => const SplashScreen(), // SPLASH - Initial loading screen
         '/login': (context) =>
             const LoginPage(), // LOGIN PAGE - User authentication
         '/dashboard': (context) =>

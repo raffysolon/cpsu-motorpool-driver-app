@@ -64,7 +64,7 @@ class _DriverDashboardState extends State<DriverDashboard>
     _loadTripCounts();
     _loadDriverAccount();
     _loadActiveAction();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 3), (_) {
       if (!mounted || !_isPageVisible) return;
       if (!_isRefreshRunning) {
         _loadTripCounts(background: true);

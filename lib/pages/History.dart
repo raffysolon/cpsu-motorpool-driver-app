@@ -56,6 +56,14 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
   List<Trip> _trips = [];
   Timer? _refreshTimer;
 
+  // Search and pagination state
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
+  int _currentPage = 1;
+  int _lastPage = 1;
+  int _totalRecords = 0;
+  final int _perPage = 20;
+
   @override
   void initState() {
     super.initState();
@@ -84,6 +92,7 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
   @override
   void dispose() {
     _refreshTimer?.cancel();
+    _searchController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -97,8 +106,19 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
     }
 
     try {
-      final rawTrips = await TripService.getMyTrips(status: 'completed');
+      final rawTrips = await TripService.getMyTrips(
+        status: 'completed',
+        search: _searchQuery.isEmpty ? null : _searchQuery,
+        page: _currentPage,
+        perPage: _perPage,
+      );
       final nextTrips = rawTrips.map(_tripFromApi).toList();
+      
+      // For now, set simple pagination values since backend returns list
+      // TODO: Update when backend returns paginated response with metadata
+      _totalRecords = nextTrips.length;
+      _lastPage = 1;
+      
       if (!mounted) return;
       if (!background || _hasTripsChanged(nextTrips)) {
         setState(() {
@@ -117,6 +137,32 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
       if (background) {
         _isRefreshRunning = false;
       }
+    }
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() {
+      _searchQuery = value;
+      _currentPage = 1;
+    });
+    _loadTrips();
+  }
+
+  void _goToPage(int page) {
+    if (page < 1 || page > _lastPage) return;
+    setState(() => _currentPage = page);
+    _loadTrips();
+  }
+
+  void _nextPage() {
+    if (_currentPage < _lastPage) {
+      _goToPage(_currentPage + 1);
+    }
+  }
+
+  void _previousPage() {
+    if (_currentPage > 1) {
+      _goToPage(_currentPage - 1);
     }
   }
 
@@ -194,7 +240,7 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Trip History (${_trips.length})',
+          'Trip History ($_totalRecords)',
           style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
@@ -208,6 +254,8 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
           child: Column(
           children: [
             _buildFilterRow(),
+            const SizedBox(height: 4),
+            _buildSearchBar(),
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
@@ -215,8 +263,95 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
                   ? _buildEmptyState()
                   : _buildTripList(),
             ),
+            if (_lastPage > 1) _buildPaginationControls(),
           ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
+      child: GlassCard(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        borderRadius: 12,
+        child: Row(
+          children: [
+            const Icon(Icons.search, color: AppColors.mutedDark, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) {
+                  // Debounce search - wait 500ms after user stops typing
+                  Future.delayed(const Duration(milliseconds: 500), () {
+                    if (_searchController.text == value) {
+                      _onSearchChanged(value);
+                    }
+                  });
+                },
+                decoration: const InputDecoration(
+                  hintText: 'Search trips...',
+                  hintStyle: TextStyle(fontSize: 13, color: AppColors.mutedDark),
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                style: const TextStyle(fontSize: 14),
+              ),
+            ),
+            if (_searchQuery.isNotEmpty)
+              IconButton(
+                icon: const Icon(Icons.clear, size: 18),
+                onPressed: () {
+                  _searchController.clear();
+                  _onSearchChanged('');
+                },
+                tooltip: 'Clear search',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaginationControls() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+      child: GlassCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        borderRadius: 12,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Page $_currentPage of $_lastPage',
+              style: const TextStyle(fontSize: 12, color: AppColors.mutedDark),
+            ),
+            Row(
+              children: [
+                IconButton(
+                  onPressed: _currentPage > 1 ? _previousPage : null,
+                  icon: const Icon(Icons.chevron_left, size: 22),
+                  tooltip: 'Previous page',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                ),
+                const SizedBox(width: 4),
+                IconButton(
+                  onPressed: _currentPage < _lastPage ? _nextPage : null,
+                  icon: const Icon(Icons.chevron_right, size: 22),
+                  tooltip: 'Next page',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
