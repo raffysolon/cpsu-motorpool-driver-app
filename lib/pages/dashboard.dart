@@ -61,15 +61,11 @@ class _DriverDashboardState extends State<DriverDashboard>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadNotificationCount();
-    _loadTripCounts();
+    _loadDashboardTrips();
     _loadDriverAccount();
-    _loadActiveAction();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       if (!mounted || !_isPageVisible) return;
-      if (!_isRefreshRunning) {
-        _loadTripCounts(background: true);
-        _loadActiveAction(background: true);
-      }
+      _loadDashboardTrips(background: true);
       _loadNotificationCount(background: true);
     });
   }
@@ -78,10 +74,7 @@ class _DriverDashboardState extends State<DriverDashboard>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _isPageVisible = true;
-      if (!_isRefreshRunning) {
-        _loadTripCounts(background: true);
-        _loadActiveAction(background: true);
-      }
+      _loadDashboardTrips(background: true);
       _loadNotificationCount(background: true);
     } else if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused ||
@@ -97,21 +90,34 @@ class _DriverDashboardState extends State<DriverDashboard>
     super.dispose();
   }
 
-  Future<void> _loadActiveAction({bool background = false}) async {
-    if (background) {
-      if (_isRefreshRunning || !mounted || !_isPageVisible) return;
-      _isRefreshRunning = true;
+  Future<void> _loadDashboardTrips({bool background = false}) async {
+    if (_isRefreshRunning || !mounted || (background && !_isPageVisible)) {
+      return;
     }
+    _isRefreshRunning = true;
     try {
       final trips = await TripService.getMyTrips();
       Map<String, dynamic>? selectedTrip;
       String selectedStatus = 'none';
+      var myTripsCount = 0;
+      var scheduledTripsCount = 0;
+      var historyCount = 0;
 
       for (final trip in trips) {
         final status = (trip['effective_status'] ?? trip['status'] ?? '')
             .toString()
             .trim()
             .toLowerCase();
+
+        if (status != 'completed') {
+          myTripsCount++;
+        }
+        if (status == 'scheduled') {
+          scheduledTripsCount++;
+        }
+        if (status == 'completed') {
+          historyCount++;
+        }
 
         if (status == 'active') {
           selectedTrip = Map<String, dynamic>.from(trip);
@@ -125,28 +131,37 @@ class _DriverDashboardState extends State<DriverDashboard>
         }
       }
 
-      final nextTrip = selectedTrip;
       final nextAction = selectedTrip == null
           ? 'Start Trip'
-          : _computeActiveAction(nextTrip, selectedStatus);
+          : _computeActiveAction(selectedTrip, selectedStatus);
 
       if (!mounted) return;
-      if (!background || nextTrip != _activeTrip || nextAction != _activeAction) {
+      final changed =
+          _myTripsCount != myTripsCount ||
+          _scheduledTripsCount != scheduledTripsCount ||
+          _historyCount != historyCount ||
+          _activeTrip != selectedTrip ||
+          _activeAction != nextAction;
+      if (!background || changed) {
         setState(() {
-          _activeTrip = nextTrip;
+          _myTripsCount = myTripsCount;
+          _scheduledTripsCount = scheduledTripsCount;
+          _historyCount = historyCount;
+          _activeTrip = selectedTrip;
           _activeAction = nextAction;
         });
       }
     } catch (_) {
       if (background) return;
     } finally {
-      if (background) {
-        _isRefreshRunning = false;
-      }
+      _isRefreshRunning = false;
     }
   }
 
-  String _computeActiveAction(Map<String, dynamic>? selectedTrip, String selectedStatus) {
+  String _computeActiveAction(
+    Map<String, dynamic>? selectedTrip,
+    String selectedStatus,
+  ) {
     if (selectedTrip == null) return 'Start Trip';
 
     final movements =
@@ -221,51 +236,6 @@ class _DriverDashboardState extends State<DriverDashboard>
     }
   }
 
-  Future<void> _loadTripCounts({bool background = false}) async {
-    try {
-      final trips = await TripService.getMyTrips();
-      var myTripsCount = 0;
-      var scheduledTripsCount = 0;
-      var historyCount = 0;
-
-      for (final trip in trips) {
-        final status = (trip['effective_status'] ?? trip['status'] ?? '')
-            .toString()
-            .trim()
-            .toLowerCase();
-
-        if (status != 'completed') {
-          myTripsCount++;
-        }
-        if (status == 'scheduled') {
-          scheduledTripsCount++;
-        }
-        if (status == 'completed') {
-          historyCount++;
-        }
-      }
-
-      if (!mounted) return;
-      final changed = _myTripsCount != myTripsCount ||
-          _scheduledTripsCount != scheduledTripsCount ||
-          _historyCount != historyCount;
-      if (!background || changed) {
-        setState(() {
-          _myTripsCount = myTripsCount;
-          _scheduledTripsCount = scheduledTripsCount;
-          _historyCount = historyCount;
-        });
-      }
-    } catch (_) {
-      if (background) return;
-      if (!mounted) return;
-      setState(() {
-        _myTripsCount = 0;
-        _scheduledTripsCount = 0;
-        _historyCount = 0;
-      });
-    }
-  }
   // ===== DASHBOARD STATE - END ====="
 
   // ===== BUILD METHOD - START =====
@@ -507,337 +477,344 @@ class _DriverDashboardState extends State<DriverDashboard>
       body: ShellAtmosphere(
         child: SafeArea(
           child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Welcome Section
-              const SizedBox(height: 20),
-              // ===== WELCOME MESSAGE SECTION - START =====
-              /// Welcome greeting for the driver
-              Text(
-                'Welcome, $_driverFirstName!',
-                style: AppTypography.displayTitle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  color: textColor,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'What would you like to do today?',
-                style: AppTypography.bodyStyle(
-                  fontSize: 16,
-                  color: Color(0xFF7C7C7C),
-                ),
-              ),
-              const SizedBox(height: 40),
-              // ===== WELCOME MESSAGE SECTION - END =====
-
-              // ===== CREATE TRIP TICKET BUTTON - START =====
-              Container(
-                width: double.infinity,
-                height: 180,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [green, darkGreen],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Welcome Section
+                const SizedBox(height: 20),
+                // ===== WELCOME MESSAGE SECTION - START =====
+                /// Welcome greeting for the driver
+                Text(
+                  'Welcome, $_driverFirstName!',
+                  style: AppTypography.displayTitle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    color: textColor,
                   ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: green.withValues(alpha: 0.4),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
                 ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: _goToAddTrip,
+                const SizedBox(height: 8),
+                Text(
+                  'What would you like to do today?',
+                  style: AppTypography.bodyStyle(
+                    fontSize: 16,
+                    color: Color(0xFF7C7C7C),
+                  ),
+                ),
+                const SizedBox(height: 40),
+                // ===== WELCOME MESSAGE SECTION - END =====
+
+                // ===== CREATE TRIP TICKET BUTTON - START =====
+                Container(
+                  width: double.infinity,
+                  height: 180,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [green, darkGreen],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     borderRadius: BorderRadius.circular(20),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                          ),
-                          child: const Icon(Icons.add, size: 48, color: green),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Create Trip Ticket',
-                          style: AppTypography.buttonLabel(
-                            fontSize: 20,
-                            color: Colors.white,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Start a new trip request',
-                          style: AppTypography.bodyStyle(
-                            fontSize: 13,
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ],
-                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: green.withValues(alpha: 0.4),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
-                ),
-              ),
-
-              // ===== CREATE TRIP TICKET BUTTON - END =====
-              const SizedBox(height: 30),
-
-              // ===== ACTIVE TRIPS SECTION - START =====
-              ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: 240),
-                child: GlassCard(
-                  padding: const EdgeInsets.all(20),
-                  borderRadius: 20,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header with Active Badge
-                      Row(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _goToAddTrip,
+                      borderRadius: BorderRadius.circular(20),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: green,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              _activeTrip != null ? 'IN PROGRESS' : 'ACTIVE',
-                              style: AppTypography.labelCaps(
-                                color: Colors.white,
-                                fontSize: 10,
-                                letterSpacing: 0,
-                              ),
-                            ),
-                          ),
-                          const Spacer(),
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
+                            width: 80,
+                            height: 80,
+                            decoration: const BoxDecoration(
                               shape: BoxShape.circle,
-                              color: softGreen,
+                              color: Colors.white,
                             ),
                             child: const Icon(
-                              Icons.directions_car_filled,
+                              Icons.add,
+                              size: 48,
                               color: green,
-                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Create Trip Ticket',
+                            style: AppTypography.buttonLabel(
+                              fontSize: 20,
+                              color: Colors.white,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Start a new trip request',
+                            style: AppTypography.bodyStyle(
+                              fontSize: 13,
+                              color: Colors.white70,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-
-                      if (_activeTrip == null)
-                        Padding(
-                          padding: EdgeInsets.only(top: 24, bottom: 24),
-                          child: Center(
-                            child: Text(
-                              'No active trips right now',
-                              style: AppTypography.bodyStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF7C7C7C),
-                              ),
-                            ),
-                          ),
-                        )
-                      else ...[
-                        // Trip Details
-                        Text(
-                          _activeRoute(),
-                          style: AppTypography.displayTitle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: textColor,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Vehicle and Time Info
-                        Row(
-                          children: [
-                          // Vehicle Info
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Vehicle',
-                                  style: AppTypography.labelCaps(
-                                    fontSize: 11,
-                                    color: Color(0xFF7C7C7C),
-                                    fontWeight: FontWeight.w500,
-                                    letterSpacing: 0,
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  _activeVehicle(),
-                                  style: AppTypography.bodyStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: green,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          // Divider
-                          Container(width: 1, height: 30, color: borderColor),
-                          // Time Info
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Departure',
-                                  style: AppTypography.labelCaps(
-                                    fontSize: 11,
-                                    color: Color(0xFF7C7C7C),
-                                    fontWeight: FontWeight.w500,
-                                    letterSpacing: 0,
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  _activeDeparture(),
-                                  style: AppTypography.bodyStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: green,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          // Status Info
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  'Status',
-                                  style: AppTypography.labelCaps(
-                                    fontSize: 11,
-                                    color: Color(0xFF7C7C7C),
-                                    fontWeight: FontWeight.w500,
-                                    letterSpacing: 0,
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  _displayTripStatus(
-                                    _activeTrip?['status'] ??
-                                        _activeTrip?['effective_status'],
-                                  ),
-                                  style: AppTypography.labelCaps(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: green,
-                                    letterSpacing: 0,
-                                  ),
-                                ),
-
-                              ],
-                            ),
-                          ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: ElevatedButton(
-                            onPressed: _showEndTripSheet,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: green,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: Text(_activeAction),
-                          ),
-                        ),
-                      ],
-                    ],
+                    ),
                   ),
                 ),
-              ),
-              // ===== ACTIVE TRIPS SECTION - END =====
-              const SizedBox(height: 30),
 
-              // ===== QUICK ACTION BUTTONS ROW - START =====
-              Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 112,
-                      child: _tripActionButton(
-                        icon: Icons.assignment_outlined,
-                        title: 'My Trips',
-                        subtitle: 'Pending & Completed',
-                        onPressed: _goToMyTrips,
-                        badgeCount: _myTripsCount,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: SizedBox(
-                      height: 112,
-                      child: _tripActionButton(
-                        icon: Icons.history_outlined,
-                        title: 'History',
-                        subtitle: 'Past Trips',
-                        onPressed: _goToHistory,
-                        badgeCount: _historyCount,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: SizedBox(
-                      height: 112,
-                      child: _tripActionButton(
-                        icon: Icons.schedule_outlined,
-                        title: 'Scheduled Trips',
-                        subtitle: 'Upcoming Trips',
-                        onPressed: _goToScheduledTrips,
-                        badgeCount: _scheduledTripsCount,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                // ===== CREATE TRIP TICKET BUTTON - END =====
+                const SizedBox(height: 30),
 
-              // ===== QUICK ACTION BUTTONS ROW - END =====
-              const SizedBox(height: 20),
-            ],
+                // ===== ACTIVE TRIPS SECTION - START =====
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 240),
+                  child: GlassCard(
+                    padding: const EdgeInsets.all(20),
+                    borderRadius: 20,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header with Active Badge
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: green,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                _activeTrip != null ? 'IN PROGRESS' : 'ACTIVE',
+                                style: AppTypography.labelCaps(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  letterSpacing: 0,
+                                ),
+                              ),
+                            ),
+                            const Spacer(),
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: softGreen,
+                              ),
+                              child: const Icon(
+                                Icons.directions_car_filled,
+                                color: green,
+                                size: 20,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+
+                        if (_activeTrip == null)
+                          Padding(
+                            padding: EdgeInsets.only(top: 24, bottom: 24),
+                            child: Center(
+                              child: Text(
+                                'No active trips right now',
+                                style: AppTypography.bodyStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF7C7C7C),
+                                ),
+                              ),
+                            ),
+                          )
+                        else ...[
+                          // Trip Details
+                          Text(
+                            _activeRoute(),
+                            style: AppTypography.displayTitle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: textColor,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+
+                          // Vehicle and Time Info
+                          Row(
+                            children: [
+                              // Vehicle Info
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Vehicle',
+                                      style: AppTypography.labelCaps(
+                                        fontSize: 11,
+                                        color: Color(0xFF7C7C7C),
+                                        fontWeight: FontWeight.w500,
+                                        letterSpacing: 0,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      _activeVehicle(),
+                                      style: AppTypography.bodyStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        color: green,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Divider
+                              Container(
+                                width: 1,
+                                height: 30,
+                                color: borderColor,
+                              ),
+                              // Time Info
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Departure',
+                                      style: AppTypography.labelCaps(
+                                        fontSize: 11,
+                                        color: Color(0xFF7C7C7C),
+                                        fontWeight: FontWeight.w500,
+                                        letterSpacing: 0,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      _activeDeparture(),
+                                      style: AppTypography.bodyStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        color: green,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Status Info
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      'Status',
+                                      style: AppTypography.labelCaps(
+                                        fontSize: 11,
+                                        color: Color(0xFF7C7C7C),
+                                        fontWeight: FontWeight.w500,
+                                        letterSpacing: 0,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      _displayTripStatus(
+                                        _activeTrip?['status'] ??
+                                            _activeTrip?['effective_status'],
+                                      ),
+                                      style: AppTypography.labelCaps(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: green,
+                                        letterSpacing: 0,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: ElevatedButton(
+                              onPressed: _showEndTripSheet,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: green,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: Text(_activeAction),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                // ===== ACTIVE TRIPS SECTION - END =====
+                const SizedBox(height: 30),
+
+                // ===== QUICK ACTION BUTTONS ROW - START =====
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 112,
+                        child: _tripActionButton(
+                          icon: Icons.assignment_outlined,
+                          title: 'My Trips',
+                          subtitle: 'Pending & Completed',
+                          onPressed: _goToMyTrips,
+                          badgeCount: _myTripsCount,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: SizedBox(
+                        height: 112,
+                        child: _tripActionButton(
+                          icon: Icons.history_outlined,
+                          title: 'History',
+                          subtitle: 'Past Trips',
+                          onPressed: _goToHistory,
+                          badgeCount: _historyCount,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: SizedBox(
+                        height: 112,
+                        child: _tripActionButton(
+                          icon: Icons.schedule_outlined,
+                          title: 'Scheduled Trips',
+                          subtitle: 'Upcoming Trips',
+                          onPressed: _goToScheduledTrips,
+                          badgeCount: _scheduledTripsCount,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // ===== QUICK ACTION BUTTONS ROW - END =====
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
-      ),
       ),
       // ===== MAIN BODY - END =====
     );
@@ -929,7 +906,7 @@ class _DriverDashboardState extends State<DriverDashboard>
   void _goToMyTrips() {
     Navigator.pushNamed(context, '/my-trips').then((_) {
       _loadNotificationCount();
-      _loadTripCounts();
+      _loadDashboardTrips();
     });
   }
 
@@ -942,8 +919,7 @@ class _DriverDashboardState extends State<DriverDashboard>
   void _goToScheduledTrips() {
     Navigator.pushNamed(context, '/scheduled-trips').then((_) {
       _loadNotificationCount();
-      _loadTripCounts();
-      _loadActiveAction();
+      _loadDashboardTrips();
     });
   }
 
@@ -1021,7 +997,7 @@ class _DriverDashboardState extends State<DriverDashboard>
   }
 
   Future<void> _showEndTripSheet() async {
-    await _loadActiveAction();
+    await _loadDashboardTrips();
     if (!mounted) return;
     final action = _activeAction;
     final result = await showModalBottomSheet<bool>(
@@ -1095,19 +1071,19 @@ class _DriverDashboardState extends State<DriverDashboard>
         } else {
           await TripService.endTrip(tripId);
         }
-        await _loadActiveAction();
+        await _loadDashboardTrips();
         if (!mounted) return;
         final message = action == 'Start Trip' || action == 'Start Return Trip'
             ? 'Trip started successfully.'
             : 'Trip ended. Arrival time was recorded automatically.';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
-      } catch (error) {
-        if (!mounted) return;
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Unable to process trip: $error')));
+        ).showSnackBar(SnackBar(content: Text(message)));
+      } catch (error) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Unable to process trip: $error')),
+        );
       }
     }
   }

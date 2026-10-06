@@ -90,6 +90,8 @@ class _LoginPageState extends State<LoginPage>
       if (mounted) {
         _showMessage('Cannot connect to the server. Check the backend and Wi-Fi.');
       }
+    } on AuthException catch (error) {
+      if (mounted) _showMessage(error.message);
     } catch (_) {
       if (mounted) _showMessage('Invalid email or password.');
     } finally {

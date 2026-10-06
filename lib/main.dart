@@ -7,7 +7,6 @@ import 'package:cpsumotorpooldriverapp/pages/Mytrip.dart';
 import 'package:cpsumotorpooldriverapp/pages/Notifications.dart';
 import 'package:cpsumotorpooldriverapp/pages/History.dart';
 import 'package:cpsumotorpooldriverapp/pages/ScheduledTrip.dart';
-import 'package:cpsumotorpooldriverapp/pages/splash_screen.dart';
 import 'package:cpsumotorpooldriverapp/pages/create_trip_ticket.dart';
 import 'package:cpsumotorpooldriverapp/pages/settings.dart';
 
@@ -48,12 +47,11 @@ class MyApp extends StatelessWidget {
       ),
       // ===== THEME SETUP - END =====
       // ===== APP ROUTING - START =====
-      /// Initial route when app starts (Splash screen first)
-      initialRoute: '/splash',
+      /// Initial route when app starts (goes directly to login)
+      initialRoute: '/login',
 
       /// Define all navigation routes for the application
       routes: {
-        '/splash': (context) => const SplashScreen(), // SPLASH - Initial loading screen
         '/login': (context) =>
             const LoginPage(), // LOGIN PAGE - User authentication
         '/dashboard': (context) =>

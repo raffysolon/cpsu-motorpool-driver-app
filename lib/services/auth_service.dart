@@ -3,8 +3,17 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
+class AuthException implements Exception {
+  const AuthException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
 class AuthService {
-  static const String baseUrl = 'https://cpsu-motorpool-backend.onrender.com/api';
+  static const String baseUrl = 'https://cpsumotorpool-backend.onrender.com/api';
   static const _storage = FlutterSecureStorage();
 
   static Future<Map<String, dynamic>> login(
@@ -22,12 +31,33 @@ class AuthService {
         )
         .timeout(const Duration(seconds: 10));
 
+    if (response.statusCode == 401) {
+      throw const AuthException('Email or password is incorrect.');
+    }
+    if (response.statusCode == 422) {
+      throw const AuthException('Please check the email address and try again.');
+    }
+    if (response.statusCode == 429) {
+      throw const AuthException(
+        'Too many login attempts. Wait a minute and try again.',
+      );
+    }
+    if (response.statusCode >= 500) {
+      throw const AuthException(
+        'The server could not complete the login. Please try again later.',
+      );
+    }
     if (response.statusCode != 200) {
-      throw Exception('Invalid email or password');
+      throw AuthException('Login failed (HTTP ${response.statusCode}).');
     }
 
     final data = jsonDecode(response.body) as Map<String, dynamic>;
-    await _storage.write(key: 'auth_token', value: data['token'] as String?);
+    final token = data['token'] as String?;
+    if (token == null || token.isEmpty) {
+      throw const AuthException('The server returned no login token.');
+    }
+
+    await _storage.write(key: 'auth_token', value: token);
     await _storage.write(key: 'role', value: data['role'] as String?);
     await _storage.write(key: 'name', value: data['name'] as String?);
     await _storage.write(key: 'email', value: email);
