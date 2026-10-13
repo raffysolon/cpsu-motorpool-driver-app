@@ -1,3 +1,4 @@
+import '../widgets/app_notification.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
@@ -96,21 +97,21 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
       body: ShellAtmosphere(
         child: LayoutBuilder(
           builder: (context, constraints) => SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(18, 22, 18, 40),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 760),
-              child: Column(
-                children: [
-                  buildProgress(),
-                  const SizedBox(height: 22),
-                  if (step == 0) buildDetails(),
-                  if (step == 1) buildPassengers(),
-                  if (step == 2) buildReview(),
-                ],
+            padding: const EdgeInsets.fromLTRB(18, 22, 18, 40),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 760),
+                child: Column(
+                  children: [
+                    buildProgress(),
+                    const SizedBox(height: 22),
+                    if (step == 0) buildDetails(),
+                    if (step == 1) buildPassengers(),
+                    if (step == 2) buildReview(),
+                  ],
+                ),
               ),
             ),
-          ),
           ),
         ),
       ),
@@ -650,7 +651,8 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
         (!(formKey.currentState?.validate() ?? false) ||
             vehicleId == null ||
             vehicleDisplayName?.isEmpty != false)) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppNotification.show(
+        context,
         const SnackBar(
           content: Text(
             'Complete the trip details and vehicle assignment first.',
@@ -764,12 +766,12 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
       if (mounted) Navigator.pop(context);
     } on ActiveTripException catch (error) {
       if (!mounted) return;
-      
+
       // Handle active trip validation error with detailed dialog
       final existingTrip = error.existingTrip;
       final destination = existingTrip?['destination']?.toString() ?? 'Unknown';
       final status = existingTrip?['status']?.toString() ?? 'active';
-      
+
       await showDialog<void>(
         context: context,
         builder: (dialogContext) => AlertDialog(
@@ -841,7 +843,8 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
       );
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppNotification.show(
+          context,
           SnackBar(content: Text('Unable to submit trip ticket: $error')),
         );
       }

@@ -1,3 +1,4 @@
+import '../widgets/app_notification.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -6,6 +7,7 @@ import '../theme/app_theme.dart';
 import 'package:open_filex/open_filex.dart';
 
 import '../services/trip_service.dart';
+import '../widgets/interaction_loading_overlay.dart';
 
 class Trip {
   const Trip({
@@ -70,7 +72,8 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _loadTrips();
     _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
-      if (!mounted || !_isPageVisible || _isDialogOpen || _isRefreshRunning) return;
+      if (!mounted || !_isPageVisible || _isDialogOpen || _isRefreshRunning)
+        return;
       _loadTrips(background: true);
     });
   }
@@ -99,7 +102,8 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
 
   Future<void> _loadTrips({bool background = false}) async {
     if (background) {
-      if (_isRefreshRunning || !mounted || !_isPageVisible || _isDialogOpen) return;
+      if (_isRefreshRunning || !mounted || !_isPageVisible || _isDialogOpen)
+        return;
       _isRefreshRunning = true;
     } else if (mounted) {
       setState(() => _isLoading = true);
@@ -113,12 +117,12 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
         perPage: _perPage,
       );
       final nextTrips = rawTrips.map(_tripFromApi).toList();
-      
+
       // For now, set simple pagination values since backend returns list
       // TODO: Update when backend returns paginated response with metadata
       _totalRecords = nextTrips.length;
       _lastPage = 1;
-      
+
       if (!mounted) return;
       if (!background || _hasTripsChanged(nextTrips)) {
         setState(() {
@@ -228,46 +232,55 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: lightBg,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: AppColors.glassFill,
-        foregroundColor: AppColors.navy,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Trip History ($_totalRecords)',
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.5,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: ShellAtmosphere(
-        child: SafeArea(
-          child: Column(
-          children: [
-            _buildFilterRow(),
-            const SizedBox(height: 4),
-            _buildSearchBar(),
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _trips.isEmpty
-                  ? _buildEmptyState()
-                  : _buildTripList(),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Scaffold(
+          backgroundColor: lightBg,
+          appBar: AppBar(
+            elevation: 0,
+            backgroundColor: AppColors.glassFill,
+            foregroundColor: AppColors.navy,
+            surfaceTintColor: Colors.transparent,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.pop(context),
             ),
-            if (_lastPage > 1) _buildPaginationControls(),
-          ],
+            title: Text(
+              'Trip History ($_totalRecords)',
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+              ),
+            ),
+            centerTitle: true,
+          ),
+          body: ShellAtmosphere(
+            child: SafeArea(
+              child: Column(
+                children: [
+                  _buildFilterRow(),
+                  const SizedBox(height: 4),
+                  _buildSearchBar(),
+                  Expanded(
+                    child: _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : _trips.isEmpty
+                        ? _buildEmptyState()
+                        : _buildTripList(),
+                  ),
+                  if (_lastPage > 1) _buildPaginationControls(),
+                ],
+              ),
+            ),
           ),
         ),
-      ),
+        if (_downloadingTripIds.isNotEmpty)
+          const InteractionLoadingOverlay(
+            message: 'Downloading trip ticket...',
+          ),
+      ],
     );
   }
 
@@ -294,7 +307,10 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
                 },
                 decoration: const InputDecoration(
                   hintText: 'Search trips...',
-                  hintStyle: TextStyle(fontSize: 13, color: AppColors.mutedDark),
+                  hintStyle: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.mutedDark,
+                  ),
                   border: InputBorder.none,
                   isDense: true,
                   contentPadding: EdgeInsets.zero,
@@ -339,7 +355,10 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
                   icon: const Icon(Icons.chevron_left, size: 22),
                   tooltip: 'Previous page',
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                  constraints: const BoxConstraints(
+                    minWidth: 36,
+                    minHeight: 36,
+                  ),
                 ),
                 const SizedBox(width: 4),
                 IconButton(
@@ -347,7 +366,10 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
                   icon: const Icon(Icons.chevron_right, size: 22),
                   tooltip: 'Next page',
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                  constraints: const BoxConstraints(
+                    minWidth: 36,
+                    minHeight: 36,
+                  ),
                 ),
               ],
             ),
@@ -467,18 +489,8 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
                 onPressed: _downloadingTripIds.contains(trip.id)
                     ? null
                     : () => _downloadPdf(trip.id),
-                icon: _downloadingTripIds.contains(trip.id)
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.download_outlined, size: 18),
-                label: Text(
-                  _downloadingTripIds.contains(trip.id)
-                      ? 'Downloading...'
-                      : 'Download as PDF',
-                ),
+                icon: const Icon(Icons.download_outlined, size: 18),
+                label: const Text('Download as PDF'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.black,
                   side: const BorderSide(color: green),
@@ -535,13 +547,15 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
     if (_downloadingTripIds.contains(tripId)) return;
 
     setState(() => _downloadingTripIds.add(tripId));
+
     try {
       final response = await TripService.getTripTicket(int.parse(tripId));
       final file = File('${Directory.systemTemp.path}/trip_ticket_$tripId.pdf');
       await file.writeAsBytes(response.bodyBytes, flush: true);
       final result = await OpenFilex.open(file.path);
       if (result.type != ResultType.done && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppNotification.show(
+          context,
           const SnackBar(
             content: Text('No PDF viewer is available on this phone.'),
           ),
@@ -549,7 +563,8 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppNotification.show(
+          context,
           SnackBar(content: Text('Unable to download PDF: $error')),
         );
       }

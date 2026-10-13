@@ -13,7 +13,7 @@ class AuthException implements Exception {
 }
 
 class AuthService {
-  static const String baseUrl = 'https://cpsumotorpool-backend.onrender.com/api';
+  static const String baseUrl = 'https://cpsu-motorpool-backend.onrender.com/api';
   static const _storage = FlutterSecureStorage();
 
   static Future<Map<String, dynamic>> login(

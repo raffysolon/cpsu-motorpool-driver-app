@@ -1,3 +1,4 @@
+import '../widgets/app_notification.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -1076,12 +1077,11 @@ class _DriverDashboardState extends State<DriverDashboard>
         final message = action == 'Start Trip' || action == 'Start Return Trip'
             ? 'Trip started successfully.'
             : 'Trip ended. Arrival time was recorded automatically.';
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(message)));
+        AppNotification.show(context, SnackBar(content: Text(message)));
       } catch (error) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppNotification.show(
+          context,
           SnackBar(content: Text('Unable to process trip: $error')),
         );
       }

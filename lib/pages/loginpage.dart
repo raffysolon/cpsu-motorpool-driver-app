@@ -7,6 +7,8 @@ import 'package:http/http.dart' as http;
 
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_notification.dart';
+import '../widgets/interaction_loading_overlay.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,8 +22,9 @@ class _LoginPageState extends State<LoginPage>
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final FocusNode _passwordFocusNode = FocusNode();
-  final FocusNode _passwordVisibilityFocusNode =
-      FocusNode(canRequestFocus: false);
+  final FocusNode _passwordVisibilityFocusNode = FocusNode(
+    canRequestFocus: false,
+  );
   bool _rememberMe = true;
   bool _obscurePassword = true;
   bool _emailFocused = false;
@@ -50,15 +53,13 @@ class _LoginPageState extends State<LoginPage>
       parent: _enterCtrl,
       curve: const Interval(0.1, 0.9, curve: Curves.easeOut),
     );
-    _slide = Tween<Offset>(
-      begin: const Offset(0, 0.06),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _enterCtrl,
-        curve: const Interval(0.1, 1.0, curve: Curves.easeOutCubic),
-      ),
-    );
+    _slide = Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero)
+        .animate(
+          CurvedAnimation(
+            parent: _enterCtrl,
+            curve: const Interval(0.1, 1.0, curve: Curves.easeOutCubic),
+          ),
+        );
     _enterCtrl.forward();
   }
 
@@ -84,11 +85,15 @@ class _LoginPageState extends State<LoginPage>
       Navigator.pushReplacementNamed(context, '/dashboard');
     } on TimeoutException {
       if (mounted) {
-        _showMessage('Cannot connect to the server. Check the backend and Wi-Fi.');
+        _showMessage(
+          'Cannot connect to the server. Check the backend and Wi-Fi.',
+        );
       }
     } on http.ClientException {
       if (mounted) {
-        _showMessage('Cannot connect to the server. Check the backend and Wi-Fi.');
+        _showMessage(
+          'Cannot connect to the server. Check the backend and Wi-Fi.',
+        );
       }
     } on AuthException catch (error) {
       if (mounted) _showMessage(error.message);
@@ -100,15 +105,7 @@ class _LoginPageState extends State<LoginPage>
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: const Color(0xFF1F2933),
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
+    AppNotification.showMessage(message, isError: true);
   }
 
   void _restorePasswordFocus({TextSelection? selection}) {
@@ -161,6 +158,8 @@ class _LoginPageState extends State<LoginPage>
               ),
             ),
           ),
+          if (_isLoading)
+            const InteractionLoadingOverlay(message: 'Signing in...'),
         ],
       ),
     );
@@ -299,8 +298,10 @@ class _LoginPageState extends State<LoginPage>
                       color: Color(0xFF9CA3AF),
                     ),
                     border: InputBorder.none,
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
                     prefixIcon: Icon(
                       Icons.mail_outline_rounded,
                       color: _textMuted,
@@ -409,28 +410,16 @@ class _LoginPageState extends State<LoginPage>
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _brandGreen,
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor:
-                        _brandGreen.withValues(alpha: 0.7),
+                    disabledBackgroundColor: _brandGreen.withValues(alpha: 0.7),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.4,
-                            color: Colors.white,
-                          ),
-                        )
-                      : Text(
-                          'Log in',
-                          style: AppTypography.buttonLabel(
-                            color: Colors.white,
-                          ),
-                        ),
+                  child: Text(
+                    'Log in',
+                    style: AppTypography.buttonLabel(color: Colors.white),
+                  ),
                 ),
               ),
             ],

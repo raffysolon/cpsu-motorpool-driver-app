@@ -9,6 +9,7 @@ import 'package:cpsumotorpooldriverapp/pages/History.dart';
 import 'package:cpsumotorpooldriverapp/pages/ScheduledTrip.dart';
 import 'package:cpsumotorpooldriverapp/pages/create_trip_ticket.dart';
 import 'package:cpsumotorpooldriverapp/pages/settings.dart';
+import 'package:cpsumotorpooldriverapp/widgets/app_notification.dart';
 
 // ===== IMPORTS - END =====
 
@@ -45,6 +46,8 @@ class MyApp extends StatelessWidget {
         outlinedButtonTheme: OutlinedButtonThemeData(style: _buttonStyle()),
         textButtonTheme: TextButtonThemeData(style: _buttonStyle()),
       ),
+      builder: (context, child) =>
+          AppNotification.host(child: child ?? const SizedBox.shrink()),
       // ===== THEME SETUP - END =====
       // ===== APP ROUTING - START =====
       /// Initial route when app starts (goes directly to login)

@@ -1,3 +1,4 @@
+import '../widgets/app_notification.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
@@ -87,9 +88,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    AppNotification.show(context, SnackBar(content: Text(message)));
   }
 
   String value(String key, String fallback) {
@@ -116,60 +115,60 @@ class _SettingsPageState extends State<SettingsPage> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            section('Driver Profile', [
-              readOnlyField(
-                'Name',
-                value('name', isLoading ? 'Loading...' : 'Unavailable'),
-                Icons.person_outline,
-              ),
-              readOnlyField(
-                'Email',
-                value('email', isLoading ? 'Loading...' : 'Unavailable'),
-                Icons.email_outlined,
-              ),
-              readOnlyField(
-                'Contact Number',
-                value('contact_number', 'Unavailable'),
-                Icons.phone_outlined,
-              ),
-              readOnlyField(
-                'License Number',
-                value('license_number', 'Unavailable'),
-                Icons.badge_outlined,
-              ),
-            ]),
-            const SizedBox(height: 18),
-            section('Change Password', [
-              passwordField(
-                'Current password',
-                currentPasswordController,
-                obscureCurrent,
-                () => setState(() => obscureCurrent = !obscureCurrent),
-              ),
-              passwordField(
-                'New password',
-                newPasswordController,
-                obscureNew,
-                () => setState(() => obscureNew = !obscureNew),
-              ),
-              passwordField(
-                'Confirm new password',
-                confirmPasswordController,
-                obscureConfirm,
-                () => setState(() => obscureConfirm = !obscureConfirm),
-              ),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: isSaving ? null : changePassword,
-                  child: Text(isSaving ? 'Saving...' : 'Change Password'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              section('Driver Profile', [
+                readOnlyField(
+                  'Name',
+                  value('name', isLoading ? 'Loading...' : 'Unavailable'),
+                  Icons.person_outline,
                 ),
-              ),
-            ]),
-          ],
+                readOnlyField(
+                  'Email',
+                  value('email', isLoading ? 'Loading...' : 'Unavailable'),
+                  Icons.email_outlined,
+                ),
+                readOnlyField(
+                  'Contact Number',
+                  value('contact_number', 'Unavailable'),
+                  Icons.phone_outlined,
+                ),
+                readOnlyField(
+                  'License Number',
+                  value('license_number', 'Unavailable'),
+                  Icons.badge_outlined,
+                ),
+              ]),
+              const SizedBox(height: 18),
+              section('Change Password', [
+                passwordField(
+                  'Current password',
+                  currentPasswordController,
+                  obscureCurrent,
+                  () => setState(() => obscureCurrent = !obscureCurrent),
+                ),
+                passwordField(
+                  'New password',
+                  newPasswordController,
+                  obscureNew,
+                  () => setState(() => obscureNew = !obscureNew),
+                ),
+                passwordField(
+                  'Confirm new password',
+                  confirmPasswordController,
+                  obscureConfirm,
+                  () => setState(() => obscureConfirm = !obscureConfirm),
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: isSaving ? null : changePassword,
+                    child: Text(isSaving ? 'Saving...' : 'Change Password'),
+                  ),
+                ),
+              ]),
+            ],
           ),
         ),
       ),

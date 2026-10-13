@@ -1,3 +1,4 @@
+import '../widgets/app_notification.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -7,6 +8,7 @@ import 'package:open_filex/open_filex.dart';
 
 import '../services/notification_service.dart';
 import '../services/trip_service.dart';
+import '../widgets/interaction_loading_overlay.dart';
 
 class Trip {
   const Trip({
@@ -62,7 +64,12 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _loadTrips();
     _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
-      if (!mounted || !_isPageVisible || _isDialogOpen || _isOpeningTicket || _isRefreshRunning) return;
+      if (!mounted ||
+          !_isPageVisible ||
+          _isDialogOpen ||
+          _isOpeningTicket ||
+          _isRefreshRunning)
+        return;
       _loadTrips(background: true);
     });
   }
@@ -90,7 +97,12 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
 
   Future<void> _loadTrips({bool background = false}) async {
     if (background) {
-      if (_isRefreshRunning || !mounted || !_isPageVisible || _isDialogOpen || _isOpeningTicket) return;
+      if (_isRefreshRunning ||
+          !mounted ||
+          !_isPageVisible ||
+          _isDialogOpen ||
+          _isOpeningTicket)
+        return;
       _isRefreshRunning = true;
     } else if (mounted) {
       setState(() => _isLoading = true);
@@ -157,8 +169,8 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
     final rawStatus = (data['status'] ?? 'pending').toString();
     final effectiveStatus = (data['effective_status'] ?? rawStatus).toString();
     final displayStatus = effectiveStatus.trim().toLowerCase() == 'active'
-      ? effectiveStatus
-      : rawStatus;
+        ? effectiveStatus
+        : rawStatus;
     final isApprovedScheduled =
         rawStatus.trim().toLowerCase() == 'approved' &&
         effectiveStatus.trim().toLowerCase() == 'scheduled';
@@ -247,9 +259,7 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    AppNotification.show(context, SnackBar(content: Text(message)));
   }
 
   Future<void> _showTripDetails(Trip trip) async {
@@ -305,54 +315,64 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: lightBg,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: AppColors.glassFill,
-        foregroundColor: AppColors.navy,
-        surfaceTintColor: Colors.transparent,
-        title: Text(
-          'My Trips',
-          style: AppTypography.displayTitle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.5,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: ShellAtmosphere(
-        child: Stack(
-          children: [
-            SafeArea(
-              child: Column(
-              children: [
-                _buildFilterRow(),
-                Expanded(
-                  child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _filteredTrips.isEmpty
-                      ? _buildEmptyState()
-                      : ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-                          itemCount: _filteredTrips.length + 1,
-                          itemBuilder: (context, index) {
-                            if (index == _filteredTrips.length) {
-                              return _buildPrintReminder();
-                            }
-                            final trip = _filteredTrips[index];
-                            return _buildTripCard(trip);
-                          },
-                        ),
-                ),
-              ],
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Scaffold(
+          backgroundColor: lightBg,
+          appBar: AppBar(
+            elevation: 0,
+            backgroundColor: AppColors.glassFill,
+            foregroundColor: AppColors.navy,
+            surfaceTintColor: Colors.transparent,
+            title: Text(
+              'My Trips',
+              style: AppTypography.displayTitle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
               ),
             ),
-            if (_isOpeningTicket) _buildTicketLoadingOverlay(),
-          ],
+            centerTitle: true,
+          ),
+          body: ShellAtmosphere(
+            child: Stack(
+              children: [
+                SafeArea(
+                  child: Column(
+                    children: [
+                      _buildFilterRow(),
+                      Expanded(
+                        child: _isLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : _filteredTrips.isEmpty
+                            ? _buildEmptyState()
+                            : ListView.builder(
+                                padding: const EdgeInsets.fromLTRB(
+                                  20,
+                                  4,
+                                  20,
+                                  20,
+                                ),
+                                itemCount: _filteredTrips.length + 1,
+                                itemBuilder: (context, index) {
+                                  if (index == _filteredTrips.length) {
+                                    return _buildPrintReminder();
+                                  }
+                                  final trip = _filteredTrips[index];
+                                  return _buildTripCard(trip);
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-      ),
+        if (_isOpeningTicket) _buildTicketLoadingOverlay(),
+      ],
     );
   }
 
@@ -461,7 +481,10 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () => _openTripTicket(trip.id),
-                        icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                        icon: const Icon(
+                          Icons.picture_as_pdf_outlined,
+                          size: 18,
+                        ),
                         label: const Text('View Trip Ticket'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: green,
@@ -603,42 +626,7 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
   }
 
   Widget _buildTicketLoadingOverlay() {
-    return Positioned.fill(
-      child: ColoredBox(
-        color: const Color(0x66000000),
-        child: Center(
-          child: Card(
-            elevation: 8,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: 42,
-                    height: 42,
-                    child: CircularProgressIndicator(strokeWidth: 4),
-                  ),
-                  SizedBox(height: 18),
-                  Text(
-                    'Opening trip ticket...',
-                    style: AppTypography.bodyStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    'Please wait',
-                    style: AppTypography.bodyStyle(color: Colors.black54),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+    return const InteractionLoadingOverlay(message: 'Opening trip ticket...');
   }
 
   IconData _statusIcon(String status) {

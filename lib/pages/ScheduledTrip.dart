@@ -1,3 +1,4 @@
+import '../widgets/app_notification.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -7,6 +8,7 @@ import 'package:open_filex/open_filex.dart';
 
 import '../services/notification_service.dart';
 import '../services/trip_service.dart';
+import '../widgets/interaction_loading_overlay.dart';
 
 class Trip {
   const Trip({
@@ -55,7 +57,12 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage>
     WidgetsBinding.instance.addObserver(this);
     _loadTrips();
     _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
-      if (!mounted || !_isPageVisible || _isDialogOpen || _isOpeningTicket || _isRefreshRunning) return;
+      if (!mounted ||
+          !_isPageVisible ||
+          _isDialogOpen ||
+          _isOpeningTicket ||
+          _isRefreshRunning)
+        return;
       _loadTrips(background: true);
     });
   }
@@ -83,7 +90,12 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage>
 
   Future<void> _loadTrips({bool background = false}) async {
     if (background) {
-      if (_isRefreshRunning || !mounted || !_isPageVisible || _isDialogOpen || _isOpeningTicket) return;
+      if (_isRefreshRunning ||
+          !mounted ||
+          !_isPageVisible ||
+          _isDialogOpen ||
+          _isOpeningTicket)
+        return;
       _isRefreshRunning = true;
     } else if (mounted) {
       setState(() => _isLoading = true);
@@ -230,57 +242,60 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage>
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    AppNotification.show(context, SnackBar(content: Text(message)));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: lightBg,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: AppColors.glassFill,
-        foregroundColor: AppColors.navy,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Scheduled Trips',
-          style: AppTypography.displayTitle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.5,
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Scaffold(
+          backgroundColor: lightBg,
+          appBar: AppBar(
+            elevation: 0,
+            backgroundColor: AppColors.glassFill,
+            foregroundColor: AppColors.navy,
+            surfaceTintColor: Colors.transparent,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.pop(context),
+            ),
+            title: Text(
+              'Scheduled Trips',
+              style: AppTypography.displayTitle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+              ),
+            ),
+            centerTitle: true,
+          ),
+          body: ShellAtmosphere(
+            child: Stack(
+              children: [
+                SafeArea(
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _sortedTrips.isEmpty
+                      ? _buildEmptyState()
+                      : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                          itemCount: _sortedTrips.length + 1,
+                          itemBuilder: (context, index) {
+                            if (index == _sortedTrips.length) {
+                              return _buildPrintReminder();
+                            }
+                            return _buildTripCard(_sortedTrips[index]);
+                          },
+                        ),
+                ),
+              ],
+            ),
           ),
         ),
-        centerTitle: true,
-      ),
-      body: ShellAtmosphere(
-        child: Stack(
-          children: [
-            SafeArea(
-              child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _sortedTrips.isEmpty
-                ? _buildEmptyState()
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-                    itemCount: _sortedTrips.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index == _sortedTrips.length) {
-                        return _buildPrintReminder();
-                      }
-                      return _buildTripCard(_sortedTrips[index]);
-                    },
-                  ),
-            ),
-            if (_isOpeningTicket) _buildTicketLoadingOverlay(),
-          ],
-        ),
-      ),
+        if (_isOpeningTicket) _buildTicketLoadingOverlay(),
+      ],
     );
   }
 
@@ -396,9 +411,10 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage>
       Navigator.pop(context, true);
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
+      AppNotification.show(
         context,
-      ).showSnackBar(SnackBar(content: Text('Unable to start trip: $error')));
+        SnackBar(content: Text('Unable to start trip: $error')),
+      );
     }
   }
 
@@ -538,42 +554,7 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage>
   }
 
   Widget _buildTicketLoadingOverlay() {
-    return Positioned.fill(
-      child: ColoredBox(
-        color: const Color(0x66000000),
-        child: Center(
-          child: Card(
-            elevation: 8,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: 42,
-                    height: 42,
-                    child: CircularProgressIndicator(strokeWidth: 4),
-                  ),
-                  SizedBox(height: 18),
-                  Text(
-                    'Opening trip ticket...',
-                    style: AppTypography.bodyStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    'Please wait',
-                    style: AppTypography.bodyStyle(color: Colors.black54),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+    return const InteractionLoadingOverlay(message: 'Opening trip ticket...');
   }
 
   bool _isDepartingSoon(Trip trip) {
