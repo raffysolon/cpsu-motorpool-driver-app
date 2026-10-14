@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
   static const Color primary = Color(0xFF1F8A3D);
@@ -19,9 +20,7 @@ class AppColors {
 class AppTypography {
   AppTypography._();
 
-  static const String body = 'CustomFont';
-  static const String display = 'Playfair Display';
-  static const String label = 'Oswald';
+  static final String? body = GoogleFonts.play().fontFamily;
 
   static TextStyle displayTitle({
     Color? color,
@@ -29,29 +28,25 @@ class AppTypography {
     FontWeight fontWeight = FontWeight.w800,
     double? letterSpacing,
     double? height,
-  }) =>
-      TextStyle(
-        fontFamily: display,
-        fontSize: fontSize,
-        fontWeight: fontWeight,
-        color: color,
-        letterSpacing: letterSpacing,
-        height: height,
-      );
+  }) => GoogleFonts.play(
+    fontSize: fontSize,
+    fontWeight: fontWeight,
+    color: color,
+    letterSpacing: letterSpacing,
+    height: height,
+  );
 
   static TextStyle labelCaps({
     Color? color,
     double fontSize = 13,
     FontWeight fontWeight = FontWeight.w600,
     double letterSpacing = 1.2,
-  }) =>
-      TextStyle(
-        fontFamily: label,
-        fontSize: fontSize,
-        fontWeight: fontWeight,
-        color: color,
-        letterSpacing: letterSpacing,
-      );
+  }) => GoogleFonts.play(
+    fontSize: fontSize,
+    fontWeight: fontWeight,
+    color: color,
+    letterSpacing: letterSpacing,
+  );
 
   static TextStyle bodyStyle({
     Color? color,
@@ -59,36 +54,28 @@ class AppTypography {
     FontWeight fontWeight = FontWeight.w400,
     double? height,
     double? letterSpacing,
-  }) =>
-      TextStyle(
-        fontFamily: body,
-        fontSize: fontSize,
-        fontWeight: fontWeight,
-        color: color,
-        height: height,
-        letterSpacing: letterSpacing,
-      );
+  }) => GoogleFonts.play(
+    fontSize: fontSize,
+    fontWeight: fontWeight,
+    color: color,
+    height: height,
+    letterSpacing: letterSpacing,
+  );
 
   static TextStyle buttonLabel({
     Color? color,
     double fontSize = 16,
     FontWeight fontWeight = FontWeight.w700,
     double letterSpacing = 0.3,
-  }) =>
-      TextStyle(
-        fontFamily: body,
-        fontSize: fontSize,
-        fontWeight: fontWeight,
-        color: color,
-        letterSpacing: letterSpacing,
-      );
+  }) => GoogleFonts.play(
+    fontSize: fontSize,
+    fontWeight: fontWeight,
+    color: color,
+    letterSpacing: letterSpacing,
+  );
 
-  static TextTheme textTheme(TextTheme base) => base
-      .apply(
-        fontFamily: body,
-        displayColor: AppColors.navy,
-        bodyColor: AppColors.navy,
-      )
+  static TextTheme textTheme(TextTheme base) => GoogleFonts.playTextTheme(base)
+      .apply(displayColor: AppColors.navy, bodyColor: AppColors.navy)
       .copyWith(
         displayLarge: displayTitle(fontSize: 32),
         displayMedium: displayTitle(fontSize: 28),

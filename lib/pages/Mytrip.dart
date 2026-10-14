@@ -56,6 +56,8 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
   bool _isPageVisible = true;
   bool _isRefreshRunning = false;
   Timer? _refreshTimer;
+  final TextEditingController _searchController = TextEditingController();
+  String? _loadError;
   List<Trip> _trips = [];
 
   @override
@@ -68,8 +70,9 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
           !_isPageVisible ||
           _isDialogOpen ||
           _isOpeningTicket ||
-          _isRefreshRunning)
+          _isRefreshRunning) {
         return;
+      }
       _loadTrips(background: true);
     });
   }
@@ -92,6 +95,7 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
   void dispose() {
     _refreshTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -101,8 +105,9 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
           !mounted ||
           !_isPageVisible ||
           _isDialogOpen ||
-          _isOpeningTicket)
+          _isOpeningTicket) {
         return;
+      }
       _isRefreshRunning = true;
     } else if (mounted) {
       setState(() => _isLoading = true);
@@ -125,14 +130,15 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
         setState(() {
           _trips = nextTrips;
           _isLoading = false;
+          _loadError = null;
         });
       }
     } catch (_) {
       if (background) return;
       if (!mounted) return;
       setState(() {
-        _trips = [];
         _isLoading = false;
+        _loadError = 'Unable to load trips. Check your connection and try again.';
       });
     } finally {
       if (background) {
@@ -226,8 +232,18 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
   }
 
   List<Trip> get _filteredTrips {
-    if (_selectedFilter == 'All') return _trips;
-    return _trips.where((trip) => trip.status == _selectedFilter).toList();
+    final query = _searchController.text.trim().toLowerCase();
+    return _trips.where((trip) {
+      final matchesStatus =
+          _selectedFilter == 'All' || trip.status == _selectedFilter;
+      final matchesQuery =
+          query.isEmpty ||
+          trip.route.toLowerCase().contains(query) ||
+          trip.vehicle.toLowerCase().contains(query) ||
+          trip.status.toLowerCase().contains(query) ||
+          trip.departureOrDate.toLowerCase().contains(query);
+      return matchesStatus && matchesQuery;
+    }).toList();
   }
 
   Future<void> _openTripTicket(String tripId) async {
@@ -341,12 +357,52 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
                 SafeArea(
                   child: Column(
                     children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: (_) => setState(() {}),
+                          decoration: InputDecoration(
+                            hintText: 'Search route, vehicle, or status',
+                            prefixIcon: const Icon(Icons.search_rounded),
+                            suffixIcon: _searchController.text.isEmpty
+                                ? null
+                                : IconButton(
+                                    tooltip: 'Clear search',
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      setState(() {});
+                                    },
+                                    icon: const Icon(Icons.close_rounded),
+                                  ),
+                            filled: true,
+                            fillColor: AppColors.glassFill,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 12,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: AppColors.border,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: AppColors.border,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                       _buildFilterRow(),
                       Expanded(
                         child: _isLoading
                             ? const Center(child: CircularProgressIndicator())
                             : _filteredTrips.isEmpty
-                            ? _buildEmptyState()
+                            ? _loadError == null
+                                  ? _buildEmptyState()
+                                  : _buildLoadError()
                             : ListView.builder(
                                 padding: const EdgeInsets.fromLTRB(
                                   20,
@@ -373,6 +429,36 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
         ),
         if (_isOpeningTicket) _buildTicketLoadingOverlay(),
       ],
+    );
+  }
+
+  Widget _buildLoadError() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.cloud_off_outlined,
+              size: 42,
+              color: AppColors.mutedDark,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _loadError!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.mutedDark),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => _loadTrips(),
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Try again'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -459,20 +545,18 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
                   _buildTripDetail('Status', trip.status),
                 ],
               ),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () => _showTripDetails(trip),
                       icon: const Icon(Icons.visibility_outlined, size: 18),
-                      label: const Text('View Details'),
+                      label: const Text('View details'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.black,
+                        foregroundColor: green,
                         side: const BorderSide(color: green),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 11,
-                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 11),
                       ),
                     ),
                   ),
@@ -485,14 +569,11 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
                           Icons.picture_as_pdf_outlined,
                           size: 18,
                         ),
-                        label: const Text('View Trip Ticket'),
+                        label: const Text('View trip ticket'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: green,
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 11,
-                          ),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 11),
                         ),
                       ),
                     ),

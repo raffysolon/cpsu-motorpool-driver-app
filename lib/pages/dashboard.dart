@@ -930,18 +930,19 @@ class _DriverDashboardState extends State<DriverDashboard>
       right: right,
       child: Container(
         constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-        decoration: const BoxDecoration(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+        decoration: BoxDecoration(
           color: Colors.red,
-          shape: BoxShape.circle,
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Text(
-          count > 9 ? '9+' : '$count',
+          count > 99 ? '99+' : '$count',
           textAlign: TextAlign.center,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 10,
+            fontSize: 9,
             fontWeight: FontWeight.bold,
+            height: 1.2,
           ),
         ),
       ),
