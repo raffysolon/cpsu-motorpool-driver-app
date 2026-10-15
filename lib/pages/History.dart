@@ -1,4 +1,5 @@
 import '../widgets/app_notification.dart';
+import '../widgets/skeleton_widgets.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -265,7 +266,11 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
                   _buildSearchBar(),
                   Expanded(
                     child: _isLoading
-                        ? const Center(child: CircularProgressIndicator())
+                        ? ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                            itemCount: 5,
+                            itemBuilder: (context, index) => SkeletonWidgets.tripCard(),
+                          )
                         : _trips.isEmpty
                         ? _buildEmptyState()
                         : _buildTripList(),

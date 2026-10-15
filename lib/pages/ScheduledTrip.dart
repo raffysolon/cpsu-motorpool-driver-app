@@ -1,4 +1,5 @@
 import '../widgets/app_notification.dart';
+import '../widgets/skeleton_widgets.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -276,7 +277,11 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage>
               children: [
                 SafeArea(
                   child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
+                      ? ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                          itemCount: 2,
+                          itemBuilder: (context, index) => SkeletonWidgets.tripCard(),
+                        )
                       : _sortedTrips.isEmpty
                       ? _buildEmptyState()
                       : ListView.builder(

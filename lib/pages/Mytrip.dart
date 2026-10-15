@@ -1,4 +1,5 @@
 import '../widgets/app_notification.dart';
+import '../widgets/skeleton_widgets.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -398,7 +399,11 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
                       _buildFilterRow(),
                       Expanded(
                         child: _isLoading
-                            ? const Center(child: CircularProgressIndicator())
+                            ? ListView.builder(
+                                padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+                                itemCount: 3,
+                                itemBuilder: (context, index) => SkeletonWidgets.tripCard(),
+                              )
                             : _filteredTrips.isEmpty
                             ? _loadError == null
                                   ? _buildEmptyState()
