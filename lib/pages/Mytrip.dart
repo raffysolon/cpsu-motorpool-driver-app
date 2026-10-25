@@ -57,7 +57,6 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
   bool _isPageVisible = true;
   bool _isRefreshRunning = false;
   Timer? _refreshTimer;
-  final TextEditingController _searchController = TextEditingController();
   String? _loadError;
   List<Trip> _trips = [];
 
@@ -96,7 +95,6 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
   void dispose() {
     _refreshTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
-    _searchController.dispose();
     super.dispose();
   }
 
@@ -233,17 +231,8 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
   }
 
   List<Trip> get _filteredTrips {
-    final query = _searchController.text.trim().toLowerCase();
     return _trips.where((trip) {
-      final matchesStatus =
-          _selectedFilter == 'All' || trip.status == _selectedFilter;
-      final matchesQuery =
-          query.isEmpty ||
-          trip.route.toLowerCase().contains(query) ||
-          trip.vehicle.toLowerCase().contains(query) ||
-          trip.status.toLowerCase().contains(query) ||
-          trip.departureOrDate.toLowerCase().contains(query);
-      return matchesStatus && matchesQuery;
+      return _selectedFilter == 'All' || trip.status == _selectedFilter;
     }).toList();
   }
 
@@ -358,44 +347,6 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
                 SafeArea(
                   child: Column(
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (_) => setState(() {}),
-                          decoration: InputDecoration(
-                            hintText: 'Search route, vehicle, or status',
-                            prefixIcon: const Icon(Icons.search_rounded),
-                            suffixIcon: _searchController.text.isEmpty
-                                ? null
-                                : IconButton(
-                                    tooltip: 'Clear search',
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      setState(() {});
-                                    },
-                                    icon: const Icon(Icons.close_rounded),
-                                  ),
-                            filled: true,
-                            fillColor: AppColors.glassFill,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 12,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(
-                                color: AppColors.border,
-                              ),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(
-                                color: AppColors.border,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
                       _buildFilterRow(),
                       Expanded(
                         child: _isLoading
