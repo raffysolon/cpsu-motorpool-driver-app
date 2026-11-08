@@ -54,7 +54,7 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
   bool _isLoading = true;
   bool _isPageVisible = true;
   bool _isRefreshRunning = false;
-  bool _isDialogOpen = false;
+  final bool _isDialogOpen = false;
   final Set<String> _downloadingTripIds = {};
   List<Trip> _trips = [];
   Timer? _refreshTimer;
@@ -73,8 +73,9 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _loadTrips();
     _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
-      if (!mounted || !_isPageVisible || _isDialogOpen || _isRefreshRunning)
+      if (!mounted || !_isPageVisible || _isDialogOpen || _isRefreshRunning) {
         return;
+      }
       _loadTrips(background: true);
     });
   }
@@ -103,8 +104,9 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
 
   Future<void> _loadTrips({bool background = false}) async {
     if (background) {
-      if (_isRefreshRunning || !mounted || !_isPageVisible || _isDialogOpen)
+      if (_isRefreshRunning || !mounted || !_isPageVisible || _isDialogOpen) {
         return;
+      }
       _isRefreshRunning = true;
     } else if (mounted) {
       setState(() => _isLoading = true);
@@ -233,6 +235,23 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final filteredTrips = _searchQuery.trim().isEmpty
+        ? _trips
+        : _trips.where((trip) {
+            final query = _searchQuery.trim().toLowerCase();
+            final route = trip.route.toLowerCase();
+            final date = trip.date.toLowerCase();
+            final distance = trip.distance.toLowerCase();
+            final duration = trip.duration.toLowerCase();
+            final status = trip.status.toLowerCase();
+
+            return route.contains(query) ||
+                date.contains(query) ||
+                distance.contains(query) ||
+                duration.contains(query) ||
+                status.contains(query);
+          }).toList();
+
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -271,7 +290,7 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
                             itemCount: 5,
                             itemBuilder: (context, index) => SkeletonWidgets.tripCard(),
                           )
-                        : _trips.isEmpty
+                        : filteredTrips.isEmpty
                         ? _buildEmptyState()
                         : _buildTripList(),
                   ),
@@ -425,10 +444,27 @@ class _HistoryPageState extends State<HistoryPage> with WidgetsBindingObserver {
   }
 
   Widget _buildTripList() {
+    final filteredTrips = _searchQuery.trim().isEmpty
+        ? _trips
+        : _trips.where((trip) {
+            final query = _searchQuery.trim().toLowerCase();
+            final route = trip.route.toLowerCase();
+            final date = trip.date.toLowerCase();
+            final distance = trip.distance.toLowerCase();
+            final duration = trip.duration.toLowerCase();
+            final status = trip.status.toLowerCase();
+
+            return route.contains(query) ||
+                date.contains(query) ||
+                distance.contains(query) ||
+                duration.contains(query) ||
+                status.contains(query);
+          }).toList();
+
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-      itemCount: _trips.length,
-      itemBuilder: (context, index) => _buildTripCard(_trips[index]),
+      itemCount: filteredTrips.length,
+      itemBuilder: (context, index) => _buildTripCard(filteredTrips[index]),
     );
   }
 

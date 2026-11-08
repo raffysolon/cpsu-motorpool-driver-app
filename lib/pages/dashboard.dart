@@ -270,7 +270,7 @@ class _DriverDashboardState extends State<DriverDashboard>
                 onPressed: _goToNotifications,
               ),
               if (unreadNotifications > 0)
-                _buildUnreadBadge(unreadNotifications, right: 3),
+                _buildUnreadBadge(unreadNotifications, right: 8, top: 8),
             ],
           ),
           // ===== NOTIFICATION ICON - END =====
@@ -924,9 +924,9 @@ class _DriverDashboardState extends State<DriverDashboard>
     });
   }
 
-  Widget _buildUnreadBadge(int count, {double right = -9}) {
+  Widget _buildUnreadBadge(int count, {double right = 8, double top = 8}) {
     return Positioned(
-      top: -7,
+      top: top,
       right: right,
       child: Container(
         constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
