@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:cpsumotorpooldriverapp/theme/app_theme.dart';
 import 'package:cpsumotorpooldriverapp/pages/loginpage.dart';
+import 'package:cpsumotorpooldriverapp/pages/forgot_password_page.dart';
 import 'package:cpsumotorpooldriverapp/pages/splash_screen.dart';
 import 'package:cpsumotorpooldriverapp/pages/dashboard.dart';
 import 'package:cpsumotorpooldriverapp/pages/Mytrip.dart';
@@ -63,6 +64,7 @@ class MyApp extends StatelessWidget {
         '/splash': (context) => const SplashScreen(),
         '/login': (context) =>
             const LoginPage(), // LOGIN PAGE - User authentication
+        '/forgot-password': (context) => const ForgotPasswordPage(),
         '/dashboard': (context) =>
             const DriverDashboard(), // DASHBOARD - Main home screen
         '/create-trip': (context) =>

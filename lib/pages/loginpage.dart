@@ -9,6 +9,7 @@ import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_notification.dart';
 import '../widgets/interaction_loading_overlay.dart';
+import 'forgot_password_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -377,8 +378,11 @@ class _LoginPageState extends State<LoginPage>
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () => AppNotification.showMessage(
-                    'Contact the Motorpool administrator to reset your password.',
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ForgotPasswordPage(),
+                    ),
                   ),
                   style: TextButton.styleFrom(
                     minimumSize: const Size(0, 36),
