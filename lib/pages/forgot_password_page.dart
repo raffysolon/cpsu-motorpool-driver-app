@@ -208,18 +208,56 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                               if (_submitted) ...[
                                 Container(
                                   width: double.infinity,
-                                  padding: const EdgeInsets.all(12),
+                                  padding: const EdgeInsets.all(14),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFEAF6EE),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Text(
-                                    'If an account exists with this email, you will receive password reset instructions.',
-                                    style: AppTypography.bodyStyle(
-                                      color: AppColors.brandDeep,
-                                      fontSize: 13,
-                                      height: 1.4,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: AppColors.primary.withValues(alpha: 0.3),
+                                      width: 1,
                                     ),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primary,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.check_rounded,
+                                          color: Colors.white,
+                                          size: 18,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Email sent!',
+                                              style: AppTypography.bodyStyle(
+                                                color: AppColors.brandDeep,
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'If an account exists with this email, you will receive password reset instructions. Check your inbox and spam folder.',
+                                              style: AppTypography.bodyStyle(
+                                                color: AppColors.brandDeep,
+                                                fontSize: 13,
+                                                height: 1.4,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                                 const SizedBox(height: 16),
