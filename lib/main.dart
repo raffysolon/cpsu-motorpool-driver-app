@@ -43,6 +43,67 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: AppColors.background,
         fontFamily: AppTypography.body,
         textTheme: AppTypography.textTheme(ThemeData.light().textTheme),
+        dividerTheme: const DividerThemeData(
+          color: Color(0xFFDEE7E1),
+          thickness: 1,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: const Color(0xFFF8FAF9),
+          hintStyle: const TextStyle(color: Color(0xFF718078), fontSize: 14),
+          labelStyle: const TextStyle(color: Color(0xFF58675F), fontSize: 14),
+          floatingLabelStyle: const TextStyle(
+            color: Color(0xFF176E30),
+            fontWeight: FontWeight.w600,
+          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFDEE7E1)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF1F8A3D), width: 1.5),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFB42318)),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFB42318), width: 1.5),
+          ),
+        ),
+        dialogTheme: DialogThemeData(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          elevation: 8,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+        ),
+        bottomSheetTheme: const BottomSheetThemeData(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+        ),
+        progressIndicatorTheme: const ProgressIndicatorThemeData(
+          color: Color(0xFF1F8A3D),
+        ),
+        textSelectionTheme: const TextSelectionThemeData(
+          cursorColor: Color(0xFF1F8A3D),
+          selectionColor: Color(0x331F8A3D),
+          selectionHandleColor: Color(0xFF1F8A3D),
+        ),
+        tooltipTheme: TooltipThemeData(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1F2933),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          textStyle: const TextStyle(color: Colors.white, fontSize: 12),
+        ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: _filledButtonStyle(),
         ),
@@ -88,13 +149,21 @@ class MyApp extends StatelessWidget {
 
   static ButtonStyle _filledButtonStyle() {
     return ButtonStyle(
-      backgroundColor: const WidgetStatePropertyAll(AppColors.primary),
-      foregroundColor: const WidgetStatePropertyAll(Colors.white),
+      backgroundColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.disabled)
+            ? const Color(0xFFE3EAE5)
+            : AppColors.primary,
+      ),
+      foregroundColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.disabled)
+            ? const Color(0xFF718078)
+            : Colors.white,
+      ),
       overlayColor: WidgetStatePropertyAll(
         Colors.white.withValues(alpha: 0.12),
       ),
       shape: WidgetStatePropertyAll(
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       elevation: const WidgetStatePropertyAll(0),
       padding: const WidgetStatePropertyAll(
@@ -111,11 +180,9 @@ class MyApp extends StatelessWidget {
       overlayColor: WidgetStatePropertyAll(
         AppColors.primary.withValues(alpha: 0.08),
       ),
-      side: const WidgetStatePropertyAll(
-        BorderSide(color: Color(0xFF86EFAC)),
-      ),
+      side: const WidgetStatePropertyAll(BorderSide(color: Color(0xFFC7D9CC))),
       shape: WidgetStatePropertyAll(
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       padding: const WidgetStatePropertyAll(
         EdgeInsets.symmetric(horizontal: 16, vertical: 12),
