@@ -7,6 +7,8 @@ import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
 import '../services/notification_service.dart';
 import '../services/trip_service.dart';
+import '../services/time_format.dart';
+import '../services/notification_sound_service.dart';
 
 // ===== DRIVER DASHBOARD PAGE - START =====
 /// Main dashboard page shown after login
@@ -226,7 +228,17 @@ class _DriverDashboardState extends State<DriverDashboard>
     }
     _isNotificationCountRunning = true;
     try {
-      final count = await NotificationService.getUnreadCount();
+      final notifications = await NotificationService.getNotifications();
+      final scope = await AuthService.getNotificationAccountScope();
+      if (scope != null && scope.isNotEmpty) {
+        await NotificationSoundService.instance.observeNotifications(
+          accountScope: scope,
+          notifications: notifications,
+        );
+      }
+      final count = notifications
+          .where((item) => item['is_read'] != true)
+          .length;
       if (mounted && unreadNotifications != count) {
         setState(() => unreadNotifications = count);
       }
@@ -742,7 +754,9 @@ class _DriverDashboardState extends State<DriverDashboard>
                           Align(
                             alignment: Alignment.centerRight,
                             child: ElevatedButton(
-                              onPressed: _showEndTripSheet,
+                              onPressed: _actionAvailable()
+                                  ? _showEndTripSheet
+                                  : null,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: green,
                                 foregroundColor: Colors.white,
@@ -964,15 +978,10 @@ class _DriverDashboardState extends State<DriverDashboard>
   }
 
   String _activeDeparture() {
-    final value = DateTime.tryParse(
-      '${_activeTrip?['scheduled_departure'] ?? ''}',
-    )?.toLocal();
-    if (value == null) return '—';
-    final hour = value.hour == 0
-        ? 12
-        : (value.hour > 12 ? value.hour - 12 : value.hour);
-    final minute = value.minute.toString().padLeft(2, '0');
-    return '$hour:$minute ${value.hour >= 12 ? 'PM' : 'AM'}';
+    return PhilippineTime.format(
+      _activeTrip?['scheduled_departure']?.toString(),
+      separator: ' ',
+    );
   }
 
   String _displayTripStatus(dynamic value) {
@@ -990,6 +999,19 @@ class _DriverDashboardState extends State<DriverDashboard>
       default:
         return 'PENDING';
     }
+  }
+
+  bool _actionAvailable() {
+    if (_activeTrip == null) return false;
+    if (_activeAction != 'Start Trip') return true;
+    final value = _activeTrip?['scheduled_departure']?.toString();
+    if (value == null || value.isEmpty) return false;
+    final departure = PhilippineTime.parse(value);
+    final pht = PhilippineTime.now();
+    return pht.year == departure.year &&
+        pht.month == departure.month &&
+        pht.day == departure.day &&
+        !pht.isBefore(departure.subtract(const Duration(minutes: 10)));
   }
 
   String get _driverFirstName {

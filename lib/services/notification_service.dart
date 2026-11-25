@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'auth_service.dart';
+import 'api_config.dart';
 
 class NotificationService {
   static Future<List<Map<String, dynamic>>> getNotifications() async {
@@ -12,7 +13,7 @@ class NotificationService {
     }
 
     final response = await http.get(
-      Uri.parse('${AuthService.baseUrl}/notifications'),
+      ApiConfig.apiUri('notifications'),
       headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
     );
 
@@ -32,7 +33,7 @@ class NotificationService {
     if (token == null || token.isEmpty) return;
 
     await http.put(
-      Uri.parse('${AuthService.baseUrl}/notifications/$id/read'),
+      ApiConfig.apiUri('notifications/$id/read'),
       headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
     );
   }
@@ -44,7 +45,7 @@ class NotificationService {
     }
 
     final response = await http.get(
-      Uri.parse('${AuthService.baseUrl}/notifications/unread-count'),
+      ApiConfig.apiUri('notifications/unread-count'),
       headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
     );
 

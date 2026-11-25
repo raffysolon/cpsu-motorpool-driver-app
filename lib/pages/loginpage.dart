@@ -78,6 +78,7 @@ class _LoginPageState extends State<LoginPage>
       if (!mounted) return;
 
       if ((result['role'] as String?)?.toLowerCase() != 'driver') {
+        await AuthService.logout();
         _showMessage('This account is not a driver account.');
         return;
       }

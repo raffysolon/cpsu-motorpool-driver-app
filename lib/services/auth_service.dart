@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
+import 'api_config.dart';
+
 class AuthException implements Exception {
   const AuthException(this.message);
 
@@ -14,8 +16,12 @@ class AuthException implements Exception {
 }
 
 class AuthService {
-  static const String baseUrl = 'https://cpsu-motorpool-backend.onrender.com/api';
+  static String get baseUrl => ApiConfig.apiBaseUrl;
   static const _storage = FlutterSecureStorage();
+  static String get _tokenKey => '${ApiConfig.storageNamespace}:auth_token';
+  static String get _roleKey => '${ApiConfig.storageNamespace}:role';
+  static String get _nameKey => '${ApiConfig.storageNamespace}:name';
+  static String get _emailKey => '${ApiConfig.storageNamespace}:email';
 
   static Future<Map<String, dynamic>> login(
     String email,
@@ -23,7 +29,7 @@ class AuthService {
   ) async {
     final response = await http
         .post(
-          Uri.parse('$baseUrl/login'),
+          ApiConfig.apiUri('login'),
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
@@ -36,7 +42,9 @@ class AuthService {
       throw const AuthException('Email or password is incorrect.');
     }
     if (response.statusCode == 422) {
-      throw const AuthException('Please check the email address and try again.');
+      throw const AuthException(
+        'Please check the email address and try again.',
+      );
     }
     if (response.statusCode == 429) {
       throw const AuthException(
@@ -58,18 +66,29 @@ class AuthService {
       throw const AuthException('The server returned no login token.');
     }
 
-    await _storage.write(key: 'auth_token', value: token);
-    await _storage.write(key: 'role', value: data['role'] as String?);
-    await _storage.write(key: 'name', value: data['name'] as String?);
-    await _storage.write(key: 'email', value: email);
+    final user = data['user'] is Map
+        ? Map<String, dynamic>.from(data['user'] as Map)
+        : data;
+    await _storage.write(key: _tokenKey, value: token);
+    await _storage.write(key: _roleKey, value: user['role']?.toString());
+    await _storage.write(key: _nameKey, value: user['name']?.toString());
+    await _storage.write(
+      key: _emailKey,
+      value: user['email']?.toString() ?? email,
+    );
     return data;
   }
 
-  static Future<String?> getToken() => _storage.read(key: 'auth_token');
+  static Future<String?> getToken() => _storage.read(key: _tokenKey);
 
-  static Future<String?> getName() => _storage.read(key: 'name');
+  static Future<String?> getName() => _storage.read(key: _nameKey);
 
-  static Future<String?> getEmail() => _storage.read(key: 'email');
+  static Future<String?> getEmail() => _storage.read(key: _emailKey);
+
+  static Future<String?> getRole() => _storage.read(key: _roleKey);
+
+  static Future<String?> getNotificationAccountScope() async =>
+      (await getEmail()) ?? (await getToken());
 
   /// Check if user is currently logged in
   static Future<bool> isLoggedIn() async {
@@ -84,7 +103,7 @@ class AuthService {
     }
 
     final response = await http.get(
-      Uri.parse('$baseUrl/user'),
+      ApiConfig.apiUri('user'),
       headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
     );
 
@@ -105,7 +124,7 @@ class AuthService {
     }
 
     final response = await http.put(
-      Uri.parse('$baseUrl/change-password'),
+      ApiConfig.apiUri('change-password'),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -127,7 +146,7 @@ class AuthService {
     try {
       response = await http
           .post(
-            Uri.parse('$baseUrl/password/forgot'),
+            ApiConfig.apiUri('password/forgot'),
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
@@ -155,5 +174,10 @@ class AuthService {
     }
   }
 
-  static Future<void> logout() => _storage.deleteAll();
+  static Future<void> logout() async {
+    await _storage.delete(key: _tokenKey);
+    await _storage.delete(key: _roleKey);
+    await _storage.delete(key: _nameKey);
+    await _storage.delete(key: _emailKey);
+  }
 }

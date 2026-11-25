@@ -9,6 +9,7 @@ import 'package:open_filex/open_filex.dart';
 
 import '../services/notification_service.dart';
 import '../services/trip_service.dart';
+import '../services/time_format.dart';
 import '../widgets/interaction_loading_overlay.dart';
 
 class Trip {
@@ -137,7 +138,8 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _loadError = 'Unable to load trips. Check your connection and try again.';
+        _loadError =
+            'Unable to load trips. Check your connection and try again.';
       });
     } finally {
       if (background) {
@@ -202,32 +204,7 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
   }
 
   String _formatDateTime(String value) {
-    final date = DateTime.tryParse(value)?.toLocal();
-    if (date == null) return '—';
-    final hour = date.hour == 0
-        ? 12
-        : (date.hour > 12 ? date.hour - 12 : date.hour);
-    final minute = date.minute.toString().padLeft(2, '0');
-    final period = date.hour >= 12 ? 'PM' : 'AM';
-    return '${_month(date.month)} ${date.day}, ${date.year}\n$hour:$minute $period';
-  }
-
-  String _month(int month) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return months[month - 1];
+    return value.isEmpty ? '—' : PhilippineTime.format(value);
   }
 
   List<Trip> get _filteredTrips {
@@ -351,9 +328,15 @@ class _MyTripState extends State<MyTrip> with WidgetsBindingObserver {
                       Expanded(
                         child: _isLoading
                             ? ListView.builder(
-                                padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+                                padding: const EdgeInsets.fromLTRB(
+                                  20,
+                                  4,
+                                  20,
+                                  20,
+                                ),
                                 itemCount: 3,
-                                itemBuilder: (context, index) => SkeletonWidgets.tripCard(),
+                                itemBuilder: (context, index) =>
+                                    SkeletonWidgets.tripCard(),
                               )
                             : _filteredTrips.isEmpty
                             ? _loadError == null

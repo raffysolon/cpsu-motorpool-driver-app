@@ -9,6 +9,7 @@ import 'package:open_filex/open_filex.dart';
 
 import '../services/notification_service.dart';
 import '../services/trip_service.dart';
+import '../services/time_format.dart';
 import '../widgets/interaction_loading_overlay.dart';
 
 class Trip {
@@ -150,11 +151,9 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage>
         ? Map<String, dynamic>.from(data['vehicle'] as Map)
         : const <String, dynamic>{};
     final vehicleLabel = vehicle['name'] ?? vehicle['plate_no'] ?? '—';
-    final departure =
-        DateTime.tryParse(
-          data['scheduled_departure']?.toString() ?? '',
-        )?.toLocal() ??
-        DateTime.now();
+    final departure = PhilippineTime.parse(
+      data['scheduled_departure']?.toString(),
+    );
     return Trip(
       id: (data['id'] ?? '').toString(),
       route: '$origin to $destination',
@@ -280,7 +279,8 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage>
                       ? ListView.builder(
                           padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
                           itemCount: 2,
-                          itemBuilder: (context, index) => SkeletonWidgets.tripCard(),
+                          itemBuilder: (context, index) =>
+                              SkeletonWidgets.tripCard(),
                         )
                       : _sortedTrips.isEmpty
                       ? _buildEmptyState()
@@ -305,7 +305,7 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage>
   }
 
   Widget _buildTripCard(Trip trip) {
-    final now = DateTime.now();
+    final now = PhilippineTime.now();
     final scheduledDate = trip.departureTime;
     final sameDay =
         now.year == scheduledDate.year &&
@@ -569,7 +569,7 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage>
   }
 
   Widget _buildTimingLabel(Trip trip) {
-    final now = DateTime.now();
+    final now = PhilippineTime.now();
     final scheduled = trip.departureTime;
     final sameDay =
         now.year == scheduled.year &&
@@ -616,7 +616,7 @@ class _ScheduledTripsPageState extends State<ScheduledTripsPage>
         : dateTime.hour;
     final minute = dateTime.minute.toString().padLeft(2, '0');
     final period = dateTime.hour >= 12 ? 'PM' : 'AM';
-    return '$month ${dateTime.day}, ${dateTime.year}\n$hour:$minute $period';
+    return '$month ${dateTime.day}, ${dateTime.year}\n$hour:$minute $period PHT';
   }
 
   String _monthName(int month) {

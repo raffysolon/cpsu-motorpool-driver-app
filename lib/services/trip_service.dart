@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'auth_service.dart';
+import 'api_config.dart';
 
 class TripService {
   static Future<http.Response> getTripTicket(int tripId) async {
@@ -13,7 +14,7 @@ class TripService {
 
     final response = await http
         .get(
-          Uri.parse('${AuthService.baseUrl}/trips/$tripId/print'),
+          ApiConfig.apiUri('trips/$tripId/print'),
           headers: {
             'Accept': 'application/pdf',
             'Authorization': 'Bearer $token',
@@ -42,7 +43,7 @@ class TripService {
     }
 
     final response = await http.get(
-      Uri.parse('${AuthService.baseUrl}/my-assignment'),
+      ApiConfig.apiUri('my-assignment'),
       headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
     );
 
@@ -64,7 +65,7 @@ class TripService {
       'page': page.toString(),
       'per_page': perPage.toString(),
     };
-    
+
     if (status != null && status.isNotEmpty) {
       queryParams['status'] = status;
     }
@@ -72,9 +73,8 @@ class TripService {
       queryParams['search'] = search;
     }
 
-    final uri = Uri.parse('${AuthService.baseUrl}/my-trips')
-        .replace(queryParameters: queryParams);
-    
+    final uri = ApiConfig.apiUri('my-trips', queryParameters: queryParams);
+
     final token = await AuthService.getToken();
     if (token == null || token.isEmpty) {
       throw Exception('Authentication token not found');
@@ -94,20 +94,22 @@ class TripService {
         throw Exception('You do not have permission to access trips.');
       }
       if (response.statusCode == 429) {
-        throw Exception('Too many requests. Please wait a moment and try again.');
+        throw Exception(
+          'Too many requests. Please wait a moment and try again.',
+        );
       }
       throw Exception('Unable to load trips');
     }
 
     final data = jsonDecode(response.body);
-    
+
     // Handle paginated response
     final records = data is Map && data['data'] is List
         ? data['data'] as List
         : data is List
         ? data
         : const [];
-    
+
     return records
         .whereType<Map>()
         .map((trip) => Map<String, dynamic>.from(trip))
@@ -121,7 +123,7 @@ class TripService {
     }
 
     final response = await http.post(
-      Uri.parse('${AuthService.baseUrl}$path'),
+      ApiConfig.apiUri(path),
       headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
     );
 
@@ -200,7 +202,9 @@ class TripService {
         throw Exception('Unable to create trip ticket: Validation failed');
       }
       if (response.statusCode == 429) {
-        throw Exception('Too many requests. Please wait a moment and try again.');
+        throw Exception(
+          'Too many requests. Please wait a moment and try again.',
+        );
       }
       throw Exception('Unable to create trip ticket');
     }
@@ -213,9 +217,9 @@ class TripService {
 class ActiveTripException implements Exception {
   final String message;
   final Map<String, dynamic>? existingTrip;
-  
+
   ActiveTripException(this.message, this.existingTrip);
-  
+
   @override
   String toString() => message;
 }
