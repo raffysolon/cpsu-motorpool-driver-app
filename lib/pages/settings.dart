@@ -20,14 +20,10 @@ class _SettingsPageState extends State<SettingsPage> {
   static const background = AppColors.background;
 
   final currentPasswordController = TextEditingController();
-  final newPasswordController = TextEditingController();
-  final confirmPasswordController = TextEditingController();
   Map<String, dynamic> profile = const {};
   bool isLoading = true;
   bool isSaving = false;
   bool obscureCurrent = true;
-  bool obscureNew = true;
-  bool obscureConfirm = true;
 
   @override
   void initState() {
@@ -38,8 +34,6 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void dispose() {
     currentPasswordController.dispose();
-    newPasswordController.dispose();
-    confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -58,31 +52,30 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> changePassword() async {
     final current = currentPasswordController.text;
-    final next = newPasswordController.text;
-    final confirm = confirmPasswordController.text;
-
-    if (current.isEmpty || next.isEmpty || confirm.isEmpty) {
-      showMessage('Complete all password fields.');
-      return;
-    }
-    if (next.length < 8) {
-      showMessage('New password must be at least 8 characters.');
-      return;
-    }
-    if (next != confirm) {
-      showMessage('New passwords do not match.');
+    if (isSaving) return;
+    if (current.isEmpty) {
+      showMessage('Enter your current password.');
       return;
     }
 
     setState(() => isSaving = true);
     try {
-      await AuthService.changePassword(current, next);
+      await AuthService.changePassword(current);
+      if (!mounted) return;
       currentPasswordController.clear();
-      newPasswordController.clear();
-      confirmPasswordController.clear();
-      showMessage('Password changed successfully.');
+      AppNotification.showMessage(
+        'Password reset email sent. Check your inbox or spam folder to continue.',
+        isSuccess: true,
+      );
+    } on AuthException catch (error) {
+      if (mounted) AppNotification.showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage('Unable to change password. Check your current password.');
+      if (mounted) {
+        AppNotification.showMessage(
+          'Unable to send the password reset email. Please try again.',
+          isError: true,
+        );
+      }
     } finally {
       if (mounted) setState(() => isSaving = false);
     }
@@ -146,30 +139,23 @@ class _SettingsPageState extends State<SettingsPage> {
               ]),
               const SizedBox(height: 18),
               section('Change Password', [
+                const Text(
+                  'Confirm your current password to receive a link at your registered email. Choose your new password using that link.',
+                ),
                 passwordField(
                   'Current password',
                   currentPasswordController,
                   obscureCurrent,
                   () => setState(() => obscureCurrent = !obscureCurrent),
                 ),
-                passwordField(
-                  'New password',
-                  newPasswordController,
-                  obscureNew,
-                  () => setState(() => obscureNew = !obscureNew),
-                ),
-                passwordField(
-                  'Confirm new password',
-                  confirmPasswordController,
-                  obscureConfirm,
-                  () => setState(() => obscureConfirm = !obscureConfirm),
-                ),
                 SizedBox(
                   width: double.infinity,
                   height: 48,
                   child: ElevatedButton(
                     onPressed: isSaving ? null : changePassword,
-                    child: Text(isSaving ? 'Saving...' : 'Change Password'),
+                    child: Text(
+                      isSaving ? 'Sending...' : 'Send password reset email',
+                    ),
                   ),
                 ),
               ]),
