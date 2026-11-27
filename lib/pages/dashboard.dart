@@ -1,3 +1,4 @@
+import '../services/notification_updates.dart';
 import '../widgets/app_notification.dart';
 import 'dart:async';
 
@@ -47,6 +48,7 @@ class _DriverDashboardState extends State<DriverDashboard>
 
   // ===== DASHBOARD STATE - START =====
   int unreadNotifications = 0;
+  final _notificationUpdates = NotificationUpdates();
   int _myTripsCount = 0;
   int _scheduledTripsCount = 0;
   int _historyCount = 0;
@@ -66,7 +68,7 @@ class _DriverDashboardState extends State<DriverDashboard>
     _loadNotificationCount();
     _loadDashboardTrips();
     _loadDriverAccount();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       if (!mounted || !_isPageVisible) return;
       _loadDashboardTrips(background: true);
       _loadNotificationCount(background: true);
@@ -231,6 +233,8 @@ class _DriverDashboardState extends State<DriverDashboard>
       final notifications = await NotificationService.getNotifications();
       final scope = await AuthService.getNotificationAccountScope();
       if (scope != null && scope.isNotEmpty) {
+        final message = _notificationUpdates.observe(scope, notifications);
+        if (message != null && mounted) AppNotification.showMessage(message);
         await NotificationSoundService.instance.observeNotifications(
           accountScope: scope,
           notifications: notifications,

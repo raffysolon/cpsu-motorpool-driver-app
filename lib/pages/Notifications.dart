@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/notification_service.dart';
@@ -13,6 +14,8 @@ class Notifications extends StatefulWidget {
 
 class _NotificationsState extends State<Notifications> {
   bool _isLoading = true;
+  bool _fetching = false;
+  Timer? _timer;
   String? _error;
   List<Map<String, dynamic>> _notifications = [];
 
@@ -20,9 +23,22 @@ class _NotificationsState extends State<Notifications> {
   void initState() {
     super.initState();
     _loadNotifications();
+    _timer = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (mounted &&
+          WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed)
+        _loadNotifications();
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadNotifications() async {
+    if (_fetching) return;
+    _fetching = true;
     try {
       final notifications = await NotificationService.getNotifications();
       if (!mounted) return;
@@ -49,6 +65,8 @@ class _NotificationsState extends State<Notifications> {
           _error = 'Unable to load notifications. Pull down to retry.';
         });
       }
+    } finally {
+      _fetching = false;
     }
   }
 
@@ -67,7 +85,12 @@ class _NotificationsState extends State<Notifications> {
               onRefresh: _loadNotifications,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  16,
+                  16,
+                  24 + MediaQuery.viewPaddingOf(context).bottom,
+                ),
                 children: [
                   Text(
                     '${_notifications.where((n) => n['is_read'] != true).length} unread',
