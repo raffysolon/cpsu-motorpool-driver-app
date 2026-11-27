@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
-
 import '../services/notification_service.dart';
 import '../services/auth_service.dart';
 import '../services/notification_sound_service.dart';
-import '../services/time_format.dart';
+import '../widgets/notification_item.dart';
 
 class Notifications extends StatefulWidget {
   const Notifications({super.key});
-
   @override
   State<Notifications> createState() => _NotificationsState();
 }
 
 class _NotificationsState extends State<Notifications> {
   bool _isLoading = true;
+  String? _error;
   List<Map<String, dynamic>> _notifications = [];
 
   @override
@@ -26,127 +25,91 @@ class _NotificationsState extends State<Notifications> {
   Future<void> _loadNotifications() async {
     try {
       final notifications = await NotificationService.getNotifications();
-      final scope = await AuthService.getNotificationAccountScope();
-      if (scope != null && scope.isNotEmpty) {
-        await NotificationSoundService.instance.observeNotifications(
-          accountScope: scope,
-          notifications: notifications,
-        );
-      }
       if (!mounted) return;
       setState(() {
         _notifications = notifications;
         _isLoading = false;
+        _error = null;
       });
+      try {
+        final scope = await AuthService.getNotificationAccountScope();
+        if (scope != null && scope.isNotEmpty) {
+          await NotificationSoundService.instance.observeNotifications(
+            accountScope: scope,
+            notifications: notifications,
+          );
+        }
+      } catch (_) {
+        /* Sound preferences must not hide a loaded inbox. */
+      }
     } catch (_) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _markAsRead(Map<String, dynamic> notification) async {
-    final id = int.tryParse(notification['id'].toString());
-    if (id == null) return;
-    await NotificationService.markAsRead(id);
-    if (mounted) {
-      setState(() {
-        notification['is_read'] = true;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _error = 'Unable to load notifications. Pull down to retry.';
+        });
+      }
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notifications'),
-        backgroundColor: AppColors.glassFill,
-        foregroundColor: AppColors.navy,
-        surfaceTintColor: Colors.transparent,
-      ),
-      body: ShellAtmosphere(
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : RefreshIndicator(
-                onRefresh: _loadNotifications,
-                child: _notifications.isEmpty
-                    ? ListView(
-                        children: const [
-                          SizedBox(height: 220),
-                          Center(child: Text('No notifications.')),
-                        ],
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _notifications.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 10),
-                        itemBuilder: (context, index) {
-                          final notification = _notifications[index];
-                          final isRead = notification['is_read'] == true;
-                          final isHighPriority =
-                              notification['priority']
-                                  ?.toString()
-                                  .toLowerCase() ==
-                              'high';
-                          return GlassCard(
-                            padding: EdgeInsets.zero,
-                            borderRadius: 14,
-                            child: ListTile(
-                              leading: Icon(
-                                isHighPriority
-                                    ? Icons.warning_amber_rounded
-                                    : isRead
-                                    ? Icons.notifications_none
-                                    : Icons.notifications_active,
-                                color: isHighPriority
-                                    ? Colors.red.shade700
-                                    : isRead
-                                    ? AppColors.muted
-                                    : AppColors.primary,
-                              ),
-                              title: Row(
-                                children: [
-                                  if (isHighPriority)
-                                    Padding(
-                                      padding: const EdgeInsets.only(right: 6),
-                                      child: Text(
-                                        'HIGH',
-                                        style: TextStyle(
-                                          color: Colors.red.shade700,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                      ),
-                                    ),
-                                  Expanded(
-                                    child: Text(
-                                      (notification['message'] ??
-                                              'Notification')
-                                          .toString(),
-                                      style: AppTypography.bodyStyle(
-                                        fontWeight: isRead
-                                            ? FontWeight.normal
-                                            : FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              subtitle: Text(
-                                PhilippineTime.format(
-                                  notification['created_at']?.toString(),
-                                  separator: ' • ',
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: const Text('Notifications'),
+      backgroundColor: AppColors.glassFill,
+      foregroundColor: AppColors.navy,
+      surfaceTintColor: Colors.transparent,
+    ),
+    body: ShellAtmosphere(
+      child: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _loadNotifications,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                children: [
+                  Text(
+                    '${_notifications.where((n) => n['is_read'] != true).length} unread',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 12),
+                  if (_error != null)
+                    Text(_error!, style: const TextStyle(color: Colors.red)),
+                  if (_notifications.isEmpty && _error == null)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 180),
+                      child: Center(child: Text('No notifications.')),
+                    ),
+                  for (final item in _notifications)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: GlassCard(
+                        padding: EdgeInsets.zero,
+                        borderRadius: 14,
+                        child: NotificationItem(
+                          key: ValueKey(item['id']),
+                          notification: item,
+                          onAcknowledge: (id) async {
+                            await NotificationService.markAsRead(id);
+                            if (mounted) setState(() => item['is_read'] = true);
+                          },
+                          onDelete: (id) async {
+                            await NotificationService.deleteNotification(id);
+                            if (mounted) {
+                              setState(
+                                () => _notifications.removeWhere(
+                                  (n) => '${n['id']}' == '$id',
                                 ),
-                              ),
-                              onTap: isRead
-                                  ? null
-                                  : () => _markAsRead(notification),
-                            ),
-                          );
-                        },
+                              );
+                            }
+                          },
+                        ),
                       ),
+                    ),
+                ],
               ),
-      ),
-    );
-  }
+            ),
+    ),
+  );
 }

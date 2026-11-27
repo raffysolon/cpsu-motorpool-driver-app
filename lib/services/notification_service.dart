@@ -30,12 +30,31 @@ class NotificationService {
 
   static Future<void> markAsRead(int id) async {
     final token = await AuthService.getToken();
-    if (token == null || token.isEmpty) return;
+    if (token == null || token.isEmpty) {
+      throw Exception('Authentication token not found');
+    }
 
-    await http.put(
+    final response = await http.put(
       ApiConfig.apiUri('notifications/$id/read'),
       headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
     );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Unable to mark notification as read');
+    }
+  }
+
+  static Future<void> deleteNotification(int id) async {
+    final token = await AuthService.getToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('Authentication token not found');
+    }
+    final response = await http.delete(
+      ApiConfig.apiUri('notifications/$id'),
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Unable to delete notification');
+    }
   }
 
   static Future<int> getUnreadCount() async {

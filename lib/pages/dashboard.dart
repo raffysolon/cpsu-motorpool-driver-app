@@ -1112,8 +1112,9 @@ class _DriverDashboardState extends State<DriverDashboard>
   }
 
   /// Navigate to Notifications page
-  void _goToNotifications() {
-    Navigator.pushNamed(context, '/notifications');
+  Future<void> _goToNotifications() async {
+    await Navigator.pushNamed(context, '/notifications');
+    if (mounted) await _loadNotificationCount();
   }
 
   /// Navigate to App Settings page (TODO: Create page)

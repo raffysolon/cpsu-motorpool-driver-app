@@ -1,84 +1,156 @@
 import 'dart:math' as math;
-import 'package:flutter/material.dart';
-import '../services/time_format.dart';
 
-class NotificationDialog extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'notification_item.dart';
+
+class NotificationDialog extends StatefulWidget {
   const NotificationDialog({
     super.key,
     required this.notifications,
     required this.onAcknowledge,
+    this.onDelete,
   });
+
   final List<Map<String, dynamic>> notifications;
   final Future<void> Function(int id) onAcknowledge;
+  final Future<void> Function(int id)? onDelete;
+
+  @override
+  State<NotificationDialog> createState() => _NotificationDialogState();
+}
+
+class _NotificationDialogState extends State<NotificationDialog> {
+  final Set<int> _deleted = {};
+  List<Map<String, dynamic>> get notifications => widget.notifications
+      .where((item) => !_deleted.contains(int.tryParse('${item['id']}')))
+      .toList();
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.sizeOf(context);
+    final screenSize = MediaQuery.sizeOf(context);
+    final width = math.min(920.0, screenSize.width * 0.92);
+    final horizontalInset = (screenSize.width - width) / 2;
+    final verticalInset = screenSize.height * 0.08;
+
     return Dialog(
       insetPadding: EdgeInsets.symmetric(
-        horizontal: math.min(24, size.width * .06),
-        vertical: size.height * .08,
+        horizontal: horizontalInset,
+        vertical: verticalInset,
       ),
+      constraints: const BoxConstraints(maxWidth: 920),
+      clipBehavior: Clip.antiAlias,
       child: SizedBox(
-        width: math.min(620, size.width * .9),
-        height: size.height * .78,
+        key: const Key('notification-dialog-surface'),
+        width: width,
+        height: screenSize.height * 0.84,
         child: Column(
           children: [
-            ListTile(
-              title: const Text(
-                'Notifications',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
-              trailing: IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 16, 12),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Notifications',
+                      style: TextStyle(
+                        color: Color(0xFF1F2933),
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Close notifications',
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close_rounded),
+                    constraints: const BoxConstraints.tightFor(
+                      width: 48,
+                      height: 48,
+                    ),
+                  ),
+                ],
               ),
             ),
             const Divider(height: 1),
             Expanded(
               child: notifications.isEmpty
-                  ? const Center(child: Text('No notifications yet.'))
-                  : ListView.separated(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: notifications.length,
-                      separatorBuilder: (_, _) => const Divider(),
-                      itemBuilder: (_, index) {
-                        final item = notifications[index];
-                        final high =
-                            item['priority']?.toString().toLowerCase() ==
-                            'high';
-                        final id = int.tryParse('${item['id']}');
-                        return ListTile(
-                          isThreeLine: true,
-                          leading: Icon(
-                            high
-                                ? Icons.warning_amber_rounded
-                                : Icons.notifications_outlined,
-                            color: high
-                                ? Colors.red.shade700
-                                : Colors.green.shade700,
-                          ),
-                          title: high
-                              ? const Text(
-                                  'HIGH PRIORITY',
-                                  style: TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                )
-                              : null,
-                          subtitle: Text(
-                            '${item['message'] ?? 'Notification'}\n${PhilippineTime.format(item['created_at']?.toString(), separator: ' • ')}',
-                          ),
-                          onTap: id == null
+                  ? const _EmptyNotifications()
+                  : Scrollbar(
+                      thumbVisibility: screenSize.width >= 700,
+                      child: ListView.separated(
+                        key: const Key('notification-list'),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        itemCount: notifications.length,
+                        separatorBuilder: (_, _) => const Divider(height: 1),
+                        itemBuilder: (context, index) => NotificationItem(
+                          key: ValueKey(notifications[index]['id']),
+                          notification: notifications[index],
+                          onAcknowledge: widget.onAcknowledge,
+                          onDelete: widget.onDelete == null
                               ? null
-                              : () async {
-                                  await onAcknowledge(id);
+                              : (id) async {
+                                  await widget.onDelete!(id);
+                                  if (mounted) setState(() => _deleted.add(id));
                                 },
-                        );
-                      },
+                        ),
+                      ),
                     ),
+            ),
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 20, 12),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(88, 48),
+                    foregroundColor: const Color(0xFF176E30),
+                  ),
+                  child: const Text('Close'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyNotifications extends StatelessWidget {
+  const _EmptyNotifications();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.notifications_none_rounded,
+              color: Colors.blueGrey.shade300,
+              size: 44,
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'No notifications yet',
+              style: TextStyle(
+                color: Color(0xFF1F2933),
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'New updates will appear here.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.blueGrey.shade600, fontSize: 13),
             ),
           ],
         ),
