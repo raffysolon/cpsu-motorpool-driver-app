@@ -22,7 +22,6 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
 
   final formKey = GlobalKey<FormState>();
   final originController = TextEditingController();
-  late final _savedDestinations = TripService.getSavedDestinations();
   final destinationController = TextEditingController();
   final purposeController = TextEditingController();
   final passengers = <Map<String, String>>[];
@@ -349,10 +348,7 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
           children: [
             assignedVehicle(),
             field('Origin', originController, Icons.trip_origin),
-            SavedDestinationPicker(
-              destinations: _savedDestinations,
-              controller: destinationController,
-            ),
+            SavedDestinationPicker(controller: destinationController),
             field(
               'Destination',
               destinationController,
