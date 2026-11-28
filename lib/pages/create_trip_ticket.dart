@@ -35,7 +35,6 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
   TimeOfDay departureTime = TimeOfDay.now();
   DateTime? returnDate;
   TimeOfDay? returnTime;
-  int _estimatedTripMinutes = 240;
 
   @override
   void initState() {
@@ -362,25 +361,6 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
             ),
             dateField(),
             returnDateField(),
-            TextFormField(
-              initialValue: (_estimatedTripMinutes / 60).toString(),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              decoration: const InputDecoration(
-                labelText: 'Estimated trip duration (hours)',
-                helperText:
-                    'Count from departure until the trip ends, including the return leg.',
-                helperMaxLines: 2,
-              ),
-              onChanged: (value) =>
-                  _estimatedTripMinutes = _tripDurationMinutes(value) ?? 0,
-              validator: (value) {
-                return _tripDurationMinutes(value) == null
-                    ? 'Enter a duration between 1 minute and 168 hours.'
-                    : null;
-              },
-            ),
             primaryButton(
               'Continue to Passengers',
               nextStep,
@@ -739,14 +719,6 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
     if (passenger != null && mounted) setState(() => passengers.add(passenger));
   }
 
-  int? _tripDurationMinutes(String? value) {
-    final hours = double.tryParse(value?.trim() ?? '');
-    if (hours == null || !hours.isFinite || hours < 1 / 60 || hours > 168) {
-      return null;
-    }
-    return (hours * 60).round();
-  }
-
   Future<void> submitTicket() async {
     if (vehicleId == null || isSubmitting) return;
     setState(() => isSubmitting = true);
@@ -773,9 +745,6 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
         purpose: purposeController.text.trim(),
         scheduledDeparture: DateTime.parse(scheduled),
         returnScheduledDeparture: returnScheduled,
-        scheduledEndAt: DateTime.parse(
-          scheduled,
-        ).add(Duration(minutes: _estimatedTripMinutes)),
         passengers: passengers,
       );
       if (!mounted) return;
