@@ -6,6 +6,17 @@ import 'auth_service.dart';
 import 'api_config.dart';
 
 class TripService {
+  static Future<List<Map<String, dynamic>>> getSavedDestinations() async {
+    final token = await AuthService.getToken();
+    final response = await http.get(
+      ApiConfig.apiUri('saved-destinations'),
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200)
+      throw Exception('Unable to load saved destinations');
+    return (jsonDecode(response.body) as List).cast<Map<String, dynamic>>();
+  }
+
   static Future<http.Response> getTripTicket(int tripId) async {
     final token = await AuthService.getToken();
     if (token == null || token.isEmpty) {

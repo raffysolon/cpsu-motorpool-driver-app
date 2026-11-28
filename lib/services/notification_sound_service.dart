@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 @immutable
 class NotificationSoundPreferences {
   const NotificationSoundPreferences({
-    this.enabled = false,
+    this.enabled = true,
     this.volume = 0.6,
     this.highPriorityOnly = false,
   });
@@ -55,7 +55,7 @@ class NotificationSoundService {
     final prefs = await SharedPreferences.getInstance();
     final key = _key(normalized);
     _preferences = NotificationSoundPreferences(
-      enabled: prefs.getBool('$key.enabled') ?? false,
+      enabled: prefs.getBool('$key.enabled') ?? true,
       volume: (prefs.getDouble('$key.volume') ?? 0.6).clamp(0, 1).toDouble(),
       highPriorityOnly: prefs.getBool('$key.high_priority_only') ?? false,
     );
@@ -163,7 +163,7 @@ class NotificationSoundService {
       return NotificationSound.scheduledDepartureReminder;
     if (key.startsWith('departure-overdue:'))
       return NotificationSound.overdueDepartureWarning;
-    return null;
+    return NotificationSound.scheduledDepartureReminder;
   }
 }
 
