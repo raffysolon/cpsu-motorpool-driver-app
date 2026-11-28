@@ -35,6 +35,7 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
   TimeOfDay departureTime = TimeOfDay.now();
   DateTime? returnDate;
   TimeOfDay? returnTime;
+  int _estimatedTripMinutes = 240;
 
   @override
   void initState() {
@@ -361,6 +362,25 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
             ),
             dateField(),
             returnDateField(),
+            TextFormField(
+              initialValue: (_estimatedTripMinutes / 60).toString(),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Estimated trip duration (hours)',
+                helperText:
+                    'Count from departure until the trip ends, including the return leg.',
+                helperMaxLines: 2,
+              ),
+              onChanged: (value) =>
+                  _estimatedTripMinutes = _tripDurationMinutes(value) ?? 0,
+              validator: (value) {
+                return _tripDurationMinutes(value) == null
+                    ? 'Enter a duration between 1 minute and 168 hours.'
+                    : null;
+              },
+            ),
             primaryButton(
               'Continue to Passengers',
               nextStep,
@@ -719,6 +739,14 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
     if (passenger != null && mounted) setState(() => passengers.add(passenger));
   }
 
+  int? _tripDurationMinutes(String? value) {
+    final hours = double.tryParse(value?.trim() ?? '');
+    if (hours == null || !hours.isFinite || hours < 1 / 60 || hours > 168) {
+      return null;
+    }
+    return (hours * 60).round();
+  }
+
   Future<void> submitTicket() async {
     if (vehicleId == null || isSubmitting) return;
     setState(() => isSubmitting = true);
@@ -745,6 +773,9 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
         purpose: purposeController.text.trim(),
         scheduledDeparture: DateTime.parse(scheduled),
         returnScheduledDeparture: returnScheduled,
+        scheduledEndAt: DateTime.parse(
+          scheduled,
+        ).add(Duration(minutes: _estimatedTripMinutes)),
         passengers: passengers,
       );
       if (!mounted) return;
@@ -769,76 +800,15 @@ class _CreateTripTicketState extends State<CreateTripTicket> {
     } on ActiveTripException catch (error) {
       if (!mounted) return;
 
-      // Handle active trip validation error with detailed dialog
-      final existingTrip = error.existingTrip;
-      final destination = existingTrip?['destination']?.toString() ?? 'Unknown';
-      final status = existingTrip?['status']?.toString() ?? 'active';
-
       await showDialog<void>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.info_outline, color: Colors.orange),
-              SizedBox(width: 8),
-              Text('Cannot Create Trip'),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                error.message,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'You already have an active trip:',
-                style: TextStyle(fontSize: 13, color: muted),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF3CD),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.orange.shade300),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Destination: $destination',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Status: ${status.toUpperCase()}',
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Please complete or cancel your existing trip before creating a new one.',
-                style: TextStyle(fontSize: 13),
-              ),
-            ],
-          ),
+          title: const Text('Cannot Create Trip'),
+          content: Text(error.message),
           actions: [
-            ElevatedButton(
+            TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: green,
-                foregroundColor: Colors.black,
-              ),
-              child: const Text('Understood'),
+              child: const Text('OK'),
             ),
           ],
         ),

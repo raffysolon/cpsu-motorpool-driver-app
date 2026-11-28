@@ -163,6 +163,7 @@ class TripService {
     required String purpose,
     required DateTime scheduledDeparture,
     DateTime? returnScheduledDeparture,
+    DateTime? scheduledEndAt,
     required List<dynamic> passengers,
   }) async {
     final token = await AuthService.getToken();
@@ -184,6 +185,7 @@ class TripService {
         'scheduled_departure': scheduledDeparture.toIso8601String(),
         'return_scheduled_departure': returnScheduledDeparture
             ?.toIso8601String(),
+        'scheduled_end_at': scheduledEndAt?.toIso8601String(),
         'passengers': passengers.map((passenger) {
           if (passenger is String) {
             return {'name': passenger, 'designation': null};
